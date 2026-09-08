@@ -1,0 +1,14 @@
+[Commands]   # 指令配置。不同指令不可重复
+quit = "q"  # 退出程序
+reload_config = "rc"    # 重新加载配置
+revoke = "rv"   # 撤回最近n轮的消息
+list_memory = "lm"  # 列出所有声明的记忆
+delete_memory = "dm"    # 删除指定的记忆
+reset_agent = "reset"   # 重置Agent。会清空所有记忆！因此不得低于3个字符
+
+
+# 若未开启上传图片功能，则以下指令无效
+upload_images = "i"     # 上传图片
+delete_images = "di"    # 删除正在上传的指定图片
+
+# 除上述指令外，其他输入将被视为普通消息

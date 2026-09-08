@@ -1,0 +1,332 @@
+[
+    {
+        "type": "function",
+        "function": {
+            "name": "ls",
+            "description": "列出指定目录下的文件和子目录名称",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "指定目录"
+                    }
+                },
+                "required": ["path"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "lsr",
+            "description": "以文件树的形式，递归列出指定目录下的文件和子目录名称",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "指定目录的绝对路径"
+                    }
+                },
+                "required": ["path"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "read",
+            "description": "读取指定文件的内容",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "指定文件的绝对路径"
+                    }
+                },
+                "required": ["path"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "create_f",
+            "description": "创建指定文件，如果父目录不存在会自动创建",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "将要创建的文件的绝对路径"
+                    }
+                },
+                "required": ["path"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "create_d",
+            "description": "创建指定目录，如果父目录不存在会自动创建",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "将要创建的目录的绝对路径"
+                    }
+                },
+                "required": ["path"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "delete",
+            "description": "删除指定文件或目录；目录会被递归删除",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "将要删除的文件或目录的绝对路径"
+                    }
+                },
+                "required": ["path"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "info",
+            "description": "获取指定文件或目录的所有信息（os.stat格式）",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "指定文件或目录的绝对路径"
+                    }
+                },
+                "required": ["path"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "write_a",
+            "description": "将指定内容追加到指定文件末尾。注意：不可向json文件追加内容，否则会破坏json文件的结构",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "指定文件的绝对路径"
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "要追加的内容"
+                    }
+                },
+                "required": ["path", "content"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "write_w",
+            "description": "将指定内容写入指定文件，覆盖原文件内容",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "指定文件的绝对路径"
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "要写入的内容"
+                    }
+                },
+                "required": ["path", "content"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "rename",
+            "description": "将指定文件或目录重命名为指定名称",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "指定文件或目录的绝对路径"
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "要重命名的名称"
+                    }
+                },
+                "required": ["path", "content"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "read_docx",
+            "description": "以Markdown格式读取指定docx文件的内容",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "指定docx文件的绝对路径"
+                    }
+                },
+                "required": ["path"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "write_docx",
+            "description": "以Markdown格式文本向指定docx文件写入，覆盖原文件内容。若有，会破坏原有的特殊格式（如页眉页脚）和字号间距等。若非被明确要求，请优先新建docx文件再写入内容，或复制原文件进行备份。",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "指定docx文件的绝对路径"
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "要写入的内容（Markdown格式文本）"
+                    }
+                },
+                "required": ["path", "content"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "search",
+            "description": "在指定目录下进行搜索，返回匹配的文件或目录相对于指定目录的路径，返回的目录末尾会带有“/”",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "要搜索的目录的绝对路径"
+                    },
+                    "keyword": {
+                        "type": "string",
+                        "description": "搜索的关键字，通配符为“*”，例如：“*.txt”/“test*”/“test.txt”/“*es*”/“*es*.txt”，或以“*”匹配所有对象"
+                    },
+                    "type": {
+                        "type": "string",
+                        "description": "要搜索的对象类型，可选值为“file”/“dir”，不携带此参数则默认为全部匹配"
+                    }
+
+                },
+                "required": ["path", "keyword"]
+            }
+        }
+    },{
+        "type": "function",
+        "function": {
+            "name": "readl",
+            "description": "读取指定文件指定范围行",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "指定文件的绝对路径"
+                    },
+                    "start": {
+                        "type": "number",
+                        "description": "指定读取的起始行，为n则从第n行开始读取（包含第n行），小于等于1或不携带此参数则从文件开头开始读取"
+                    },
+                    "end": {
+                        "type": "number",
+                        "description": "必需参数，指定读取的结束行，为n则读取到第n行结束（包含第n行），若大于文件行数则读取到文件末尾，若与start参数相同则读取单行文本"
+                    }
+
+                },
+                "required": ["path", "end"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "move",
+            "description": "移动指定文件或目录到目标路径内，如果目标路径不存在会自动创建",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "source": {
+                        "type": "string",
+                        "description": "指定文件或目录的绝对路径"
+                    },
+                    "dest": {
+                        "type": "string",
+                        "description": "目标路径的绝对路径"
+                    }
+                },
+                "required": ["source", "dest"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "copy",
+            "description": "复制指定文件或目录到目标路径内，如果目标路径不存在会自动创建",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "source": {
+                        "type": "string",
+                        "description": "指定文件或目录的绝对路径"
+                    },
+                    "dest": {
+                        "type": "string",
+                        "description": "目标路径的绝对路径"
+                    }
+                },
+                "required": ["source", "dest"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "specified_memory",
+            "description": "将用户指定的记忆文本加入长期记忆。请确保记忆文本的内容简明扼要，并且是用户希望长期记忆的内容",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "memory_text": {
+                        "type": "string",
+                        "description": "指定的记忆文本。要求单段纯文本"
+                    }
+                },
+                "required": ["memory_text"]
+            }
+        }
+    }
+]
