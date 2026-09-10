@@ -5,6 +5,7 @@ from openai import OpenAI
 from pathlib import Path
 from openai import omit
 import sys
+from openai import APIError
 import json
 import platform
 import sqlite3
@@ -204,14 +205,18 @@ def chat(client: OpenAI):
         msg.append(user_msg)
 
         # 构造请求
-        response = client.chat.completions.create(
-            model=c.model,
-            tools=tools if c.tool else omit,
-            messages=msg,
-            stream=True,
-            reasoning_effort=c.reasoning_effort,
-            extra_body=c.extra_body
-        )
+        try:
+            response = client.chat.completions.create(
+                model=c.model,
+                tools=tools if c.tool else omit,
+                messages=msg,
+                stream=True,
+                reasoning_effort=c.reasoning_effort,
+                extra_body=c.extra_body
+            )
+        except APIError as e:
+            print(f"请求失败，可能是模型或其他配置问题，错误信息：{e}")
+            continue
         
         print(f"\n{c.assistant} >>> ", end="")
         while True:
