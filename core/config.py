@@ -1,7 +1,9 @@
+import os
 from pathlib import Path
 import sys
-from utils import file
 import random
+from dotenv import load_dotenv
+from utils import file
 
 def _ensure_value(config, table_path, key, default=None, type_ = bool):
     parts = table_path.split(".")   # 将表路径分割成各个部分
@@ -16,9 +18,10 @@ def _ensure_value(config, table_path, key, default=None, type_ = bool):
     if key not in current:
         current[key] = default  # 若键不存在则设为默认值
 
-    if not type_:
-        if type(current[key]) != type_:
-            raise TypeError(f"配置项 {key} 的类型错误，期望 {type_}，实际 {type(current[key]).__name__}")
+
+    if type_ is not None:
+        if type(current[key]) is not type_:
+            raise TypeError(f"配置项 {key} 的类型错误，期望 {type_.__name__}，实际 {type(current[key]).__name__}")
 
     return current[key]
 
@@ -57,13 +60,15 @@ class Config():
         self.extra_body = None
         self.think_output = None
         self.api_key = None
+        self.online_search = None
+        self.search_api_key = None
 
+    @staticmethod
     def exist(path: Path):
         if not path.exists():
             if not path.parent.exists():
                 path.parent.mkdir(parents=True)
             path.touch()
-        return file.read(path)
 
     def load(self):
         # 获取配置文件路径
@@ -76,10 +81,17 @@ class Config():
         commands_config = source / "config" / "指令配置.toml"
         api_config = source / "config" / "API配置.toml"
 
-        normal_config = self.exist(normal_config)
-        memory_config = self.exist(memory_config)
-        commands_config = self.exist(commands_config)
-        api_config = self.exist(api_config)
+        self.exist(normal_config)
+        self.exist(memory_config)
+        self.exist(commands_config)
+        self.exist(api_config)
+
+        normal_config = file.read(normal_config)
+        memory_config = file.read(memory_config)
+        commands_config = file.read(commands_config)
+        api_config = file.read(api_config)
+
+
 
         _ensure_value(normal_config, "Confirm", "view_files_list", default="看都不让看？", type_=None)
         _ensure_value(normal_config, "Confirm", "delete", default="删掉你也改不了", type_=None)
@@ -131,17 +143,35 @@ class Config():
         _ensure_value(api_config, "OpenAI.env", "api_key_name", default=["",], type_=list)
         self.env = _ensure_value(api_config, "OpenAI.env", "env", default=False)
         a_k = api_config["OpenAI"]["api_key"]
-        a_k_n = api_config["OpenAI.env"]["api_key_name"]
+        a_k_n = api_config["OpenAI"]["env"]["api_key_name"]
         key = []
         if self.env:
+            load_dotenv()
             for k in a_k_n:
-                if not k:
-                    key.append(k)
+                if k:
+                    key.append(os.environ.get(k))
         else:
             for k in a_k:
-                if not k:
+                if k:
                     key.append(k)
         self.api_key = random.choice(key)
+        self.online_search = _ensure_value(api_config, "OnlineSearch", "enable", default=False)
+        _ensure_value(api_config, "OnlineSearch", "api_key", default=["",], type_=list)
+        _ensure_value(api_config, "OnlineSearch", "api_key_name", default=["",], type_=list)
+        self.search_base_url = _ensure_value(api_config, "OnlineSearch", "base_url", default="", type_=str)
+        s_a_k = api_config["OnlineSearch"]["api_key"]
+        s_a_k_n = api_config["OnlineSearch"]["api_key_name"]
+        skey = []
+        if self.env:
+            load_dotenv()
+            for sk in s_a_k_n:
+                if sk:
+                    skey.append(os.environ.get(sk))
+        else:
+            for sk in s_a_k:
+                if sk:
+                    skey.append(sk)
+        self.search_api_key = random.choice(skey)
 
 
 c = Config()

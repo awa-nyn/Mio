@@ -2,6 +2,35 @@
     {
         "type": "function",
         "function": {
+            "name": "search_memory",
+            "description": "在记忆库中按语义搜索指定内容（与用户指定的记忆无关）",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "content": {
+                        "type": "string",
+                        "description": "要搜索的内容，要求是简明扼要的单段纯文本"
+                    },
+                    "num": {
+                        "type": "integer",
+                        "description": "要返回的最大搜索结果数量"
+                    },
+                    "time": {
+                        "type": "string",
+                        "description": "时间范围，用于筛选记忆。采用字符串包含匹配，完整格式为“yy-mm-dd”，例如传入“25-09-1”则可匹配2025-09-10~2025-09-19的记忆，传入“25-09”则可匹配2025年9月的记忆。不携带此参数则默认为全部匹配"
+                    },
+                    "role": {
+                        "type": "string",
+                        "description": "角色，用于筛选记忆。可选值为“user”/“assistant”，不携带此参数则默认为全部匹配"
+                    }
+                },
+                "required": ["content", "num"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "ls",
             "description": "列出指定目录下的文件和子目录名称",
             "parameters": {
@@ -316,7 +345,7 @@
         "type": "function",
         "function": {
             "name": "specified_memory",
-            "description": "将用户指定的记忆文本加入长期记忆。请确保记忆文本的内容简明扼要，并且是用户希望长期记忆的内容",
+            "description": "将用户指定的记忆（即用户明确要求记忆的内容）文本加入长期记忆（非记忆库）。请确保记忆文本的内容简明扼要，并且是用户希望长期记忆的内容",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -326,6 +355,27 @@
                     }
                 },
                 "required": ["memory_text"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "online_search",
+            "description": "在网络上进行搜索，返回搜索结果的标题、链接和描述",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "要搜索的内容"
+                    },
+                    "top": {
+                        "type": "integer",
+                        "description": "要返回的最大搜索结果数量，不携带此参数则默认为5条"
+                    }
+                },
+                "required": ["query"]
             }
         }
     }

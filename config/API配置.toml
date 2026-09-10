@@ -19,4 +19,21 @@ api_key_name = [
     "TEST_API_KEY",
     ""
     # 像这样添加多个API_KEY的名称
-]     
+]
+
+[OnlineSearch]  # 联网搜索API配置
+enable = true   # 是否启用联网搜索
+
+base_url = "https://qianfan.baidubce.com/v2/ai_search/web_search"   # 仅支持百度千帆————大概吧，其他的自己试试
+# 先看下方注释
+api_key = [
+    "",
+    ""
+    # 像这样添加多个API_KEY
+]
+# 若启用了[OpenAI.env]，则同样需要在环境变量中配置联网搜索的API_KEY_NAME，上方的API_KEY配置无效
+api_key_name = [
+    "TEST_SEARCH_API_KEY",
+    ""
+    # 像这样添加多个API_KEY的名称
+]

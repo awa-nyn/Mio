@@ -1,6 +1,7 @@
 import yaml
 from ruamel.yaml import YAML
 import tomlkit
+import tomllib
 import json
 import os
 from configparser import ConfigParser
@@ -16,7 +17,7 @@ def read(file_path, encoding='utf-8'):
         if file_path.endswith('.yaml') or file_path.endswith('.yml'):
             return yaml.safe_load(f)  # 使用yaml库读取YAML文件内容并返回
         elif file_path.endswith('.toml'):
-            return tomlkit.load(f)  # 使用tomlkit库读取TOML文件内容并返回
+            pass
         elif file_path.endswith('.json'):
             return json.load(f)  # 使用json库读取JSON文件内容并返回
         elif file_path.endswith('.ini'):
@@ -28,6 +29,9 @@ def read(file_path, encoding='utf-8'):
             return dict(os.environ)  # 返回当前环境变量的字典表示
         else:
             return f.read()  # 如果文件类型不匹配，直接读取文件内容并返回
+
+    with open(file_path, 'rb') as f:
+        return tomllib.load(f)  # 使用tomllib库读取TOML文件内容并返回
 
 def write(file_path, content, mode='a', encoding='utf-8'):
     file_path = str(file_path)

@@ -81,7 +81,8 @@ def upload_images():
         return uploads
 
     
-    from main import client
+    from main import client_get
+    client = client_get()
 
     print("正在上传...\n")
     for image in images_list:
@@ -102,4 +103,5 @@ def upload_images():
 
 
     print("上传成功！\n")
+    return uploads
 

@@ -5,9 +5,7 @@ import json
 import uuid
 import chromadb
 from core.config import c
-from utils import file
 import json
-from main import client
 
 if getattr(sys, "frozen", False):
     source = Path(sys.executable).parent
@@ -15,6 +13,8 @@ else:
     source = Path(__file__).parent.parent
 
 def update():
+    from utils import file
+    from main import client_get
     # 历史记录
     history_path = source / "memory" / "history.json"
     c.exist(history_path)
@@ -27,7 +27,12 @@ def update():
     images_data_path = source / "memory" / "images_data.jsonl"
     if not images_data_path.exists():
         images_data_path.touch()
-
+    if images_data_path.stat().st_size == 0 and c.files_api:
+        client = client_get()
+        files = client.files.list(order="desc")
+        for f in files.data:
+            client.files.delete(f.id)
+        
     # 如果向量库名称被文件占用
     if memory_path.exists() and memory_path.is_file():
         memory_path.unlink()
@@ -52,7 +57,7 @@ def update():
                     metadatas=[
                         {"year": int("20" + timestamp[0:2]),
                          "timestamp": timestamp,
-                         "source": c.user}
+                         "source": "user"}
                     ]
                 )
                 # 删除图片数据(base64)
@@ -100,6 +105,7 @@ def update():
                                     if keep:
                                         data_list.append(data)
                             if data_list:
+                                client = client_get()
                                 with open(images_data_path, "w", encoding="utf-8") as f:
                                     for data in data_list:
                                         json.dump(data, f, ensure_ascii=False)
@@ -115,13 +121,15 @@ def update():
                     metadatas=[
                         {"year": int("20" + timestamp[0:2]),
                          "timestamp": timestamp,
-                         "source": c.assistant}
+                         "source": "assistant"}
                     ]
                 )
             # 删除历史记录
             del history[0]
             if history[0]["role"] == "user":
                 break
+
+        
         # 如果时间戳大于所需时间，则停止循环
         timestamp = datetime.strptime(history[0]["content"][0]["text"][1:9], "%y-%m-%d")
         if timestamp.date() > time_needness:

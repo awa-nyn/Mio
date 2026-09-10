@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 import time
 from prompt_toolkit import PromptSession
 from openai import OpenAI
@@ -6,18 +7,19 @@ from openai import omit
 import sys
 import json
 import platform
-from utils import file
+import sqlite3
 from core.config import c
-from core import time_
-from memory import mem
-from tools import tool
-from core import images
-from commands import act
 
 session = PromptSession(multiline=True)
 
 # 对话逻辑
 def chat(client: OpenAI):
+    from utils import file
+    from core import time_
+    from core import mem
+    from tools import tool
+    from core.commands import act
+    from tools import manager
     print("发送消息（Alt + Enter提交）:")
 
     while True:
@@ -26,6 +28,14 @@ def chat(client: OpenAI):
             source = Path(sys.executable).parent
         else:
             source = Path(__file__).parent.parent
+        history_path = source / "memory" / "history.json"
+        # 读取各文件内容
+        if not history_path.exists():
+            c.exist(history_path)
+        if history_path.stat().st_size == 0:
+            file.write(history_path, [], mode='w')
+        history: list = file.read(history_path)
+
         # 输入逻辑
         images_list = []
         while True:
@@ -40,32 +50,85 @@ def chat(client: OpenAI):
                         # 删除图片
                         if return_.get("di") is not None:
                             idx = return_["di"]
-                            if idx == 0:
-                                images_list = []
-                            elif idx < 0 or idx > len(images_list):
-                                print("没有这张图片")
-                                continue
+                            # base64
+                            if images_list[0].get("image_url"):
+                                if idx == 0:
+                                    images_list = []
+                                    print("已删除所有图片")
+                                elif idx > len(images_list):
+                                    print("没有这张图片")
+                                    continue
+                                else:
+                                    del images_list[idx-1]
+                                    print(f"已删除第{idx}张图片")
+                            # Files API
+                            elif images_list[0].get("file_id"):
+                                if idx == 0:
+                                    img = images_list[0].get("file_id")
+                                    keep_data = []
+                                    with open(source / "memory" / "images_data.jsonl", "r", encoding="utf-8") as f:
+                                        for line in f:
+                                            data = json.loads(line)
+                                            if data.get("file_id") == img:
+                                                break
+                                            keep_data.append(data)
+                                    if keep_data:
+                                        with open(source / "memory" / "images_data.jsonl", "w", encoding="utf-8") as f:
+                                            for data in keep_data:
+                                                json.dump(data, f, ensure_ascii=False)
+                                                f.write("\n")
+                                    else:
+                                        with open(source / "memory" / "images_data.jsonl", "w", encoding="utf-8") as f:
+                                            f.write("")
+                                    for image in images_list:
+                                        client.files.delete(file_id=image.get("file_id"))
+                                    images_list = []
+                                    print("已删除所有图片")
+                                elif idx > len(images_list):
+                                    print("没有这张图片")
+                                    continue
+                                else:
+                                    img = images_list[idx-1].get("file_id")
+                                    keep_data = []
+                                    with open(source / "memory" / "images_data.jsonl", "r", encoding="utf-8") as f:
+                                        for line in f:
+                                            data = json.loads(line)
+                                            if data.get("file_id") == img:
+                                                continue
+                                            keep_data.append(data)
+                                    if keep_data:
+                                        with open(source / "memory" / "images_data.jsonl", "w", encoding="utf-8") as f:
+                                            for data in keep_data:
+                                                json.dump(data, f, ensure_ascii=False)
+                                                f.write("\n")
+                                    else:
+                                        with open(source / "memory" / "images_data.jsonl", "w", encoding="utf-8") as f:
+                                            f.write("")
+                                    client.files.delete(file_id=img)
+                                    del images_list[idx-1]
+                                    print(f"已删除第{idx}张图片")
+
                             else:
-                                del images_list[idx-1]
-                                print(f"已删除第{idx}张图片")
-                # 撤销操作
-                elif type(return_) == dict and return_.get("rv") is not None:
-                    idx = return_["rv"]
-                    with open(source / "memory" / "history.json", "r", encoding="utf-8") as f:
-                        his = json.load(f)
-                    for i in range(idx):
-                        if his:
-                            while True:
-                                last = his.pop()
-                                if last.get("role") == "user":
-                                    break
-                            if i == idx - 1:
-                                print(f"已撤销最近{idx}轮记录")
-                        else:
-                            print(f"没有那么多历史记录可以撤销，仅撤销了最近的{i}轮记录")
-                            break
-                    with open(source / "memory" / "history.json", "w", encoding="utf-8") as f:
-                        json.dump(his, f, ensure_ascii=False)
+                                print("没有上传任何图片")
+                    # 撤销操作
+                    if type(return_) == dict and return_.get("rv") is not None:
+                        idx = return_["rv"]
+                        with open(source / "memory" / "history.json", "r", encoding="utf-8") as f:
+                            his = json.load(f)
+                        for i in range(idx):
+                            if his:
+                                while True:
+                                    last = his.pop()
+                                    if last.get("role") == "user":
+                                        break
+                                if i == idx - 1:
+                                    print(f"已撤销最近{idx}轮记录")
+                            else:
+                                print(f"没有那么多历史记录可以撤销，仅撤销了最近的{i}轮记录")
+                                break
+                        with open(source / "memory" / "history.json", "w", encoding="utf-8") as f:
+                            json.dump(his, f, ensure_ascii=False, indent=4)
+                        history = file.read(history_path)
 
                 else:
                     break
@@ -91,27 +154,24 @@ def chat(client: OpenAI):
             msg_info += "/".join(image_ids)
             msg_info += "]"
         
-        user_msg = {"role": "user",
-                "content": [{"type": "text", "text": msg_info},
+        user_history = {"role": "user",
+                "content": [{"type": "text", "text": msg_info + input_msg},
                 ]}
-        for file in files:
-            user_msg["content"].append(file)
-        
+        for f in files:
+            user_history["content"].append(f)
 
         # 获取各文件所在路径
-        history_path = source / "memory" / "history.json"
+        system_path = source / "system.md"
 
-        # 读取各文件内容
-        history = file.read(history_path)
-
-        # 记录时间戳
-        timestamp = time_.get()
         
-        tip = time_.awareness() # 获取提示信息
+        msg = history
 
-    
-    
-        
+        # 获取提示信息
+        tip = time_.awareness()
+        user_msg = user_history
+        user_msg["content"][0]["text"] = msg_info + tip + input_msg
+
+        # 获取工具路径
         if getattr(sys, "frozen", False):
             path = Path(sys._MEIPASS)
         else:
@@ -120,36 +180,59 @@ def chat(client: OpenAI):
         tools_path = path / "tools" / "tools.json"
         tools = file.read(tools_path)
 
+        # 调取数据库
+        db_path = source / "memory" / "memory.db"
+        system_msg = []
+        with sqlite3.connect(db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='specified_memory'")
+            if cursor.fetchone():
+                cursor.execute("SELECT memory FROM specified_memory")
+                memories = cursor.fetchall()
+                if memories:
+                    memory = [mem[0] for mem in memories]
+                    system_msg = [
+                        {"role": "system", "content": "[Specified Memory]\n" + "\n".join(memory)}
+                        ]
+
+        if not system_path.exists():
+            system_path.touch()
+        system = file.read(system_path)
+        # 构造消息
+        system_msg.append({"role": "system", "content":f"Environment: {platform.system()}\n" + system})
+        msg = system_msg + msg
+        msg.append(user_msg)
+
+        # 构造请求
         response = client.chat.completions.create(
-            model=config.get("model"),
-            tools=tools if config.get("tool") else omit,
+            model=c.model,
+            tools=tools if c.tool else omit,
             messages=msg,
             stream=True,
-            reasoning_effort=config.get("reasoning_effort"),
-            extra_body=config.get("extra_body")
+            reasoning_effort=c.reasoning_effort,
+            extra_body=c.extra_body
         )
         
-        
-        print(f"\n{config.get("assistant_name")} >>> ", end="")
+        print(f"\n{c.assistant} >>> ", end="")
         while True:
             content = []
             calls = {}
             finish_reason = None
             num = 0
+            total_tokens = 0
             for chunk in response:
                 chunk = chunk.model_dump()  # 将chunk转换为字典
-                # print("DEBUG: ", chunk)
                 delta = chunk["choices"][0].get("delta", {})
-                if delta.get("reasoning"):
+                if c.think_output and delta.get("reasoning_content"):
                     if num == 0:
                         num =1
                         print("<think>", end="")
-                    print(delta["reasoning"], end="")    # 思考
+                    print(delta["reasoning_content"], end="")    # 思考
                 if delta.get("content"):
                     if num == 1:
                         num = 2
                         print("</think>\n")
-                        print(f"{config.get("assistant_name")} >>> ", end="")
+                        print(f"{c.assistant} >>> ", end="")
                     content.append(delta["content"])    # 将内容添加到列表中
                     print(delta["content"], end="", flush=True)     # 流式输出
                     time.sleep(0.05)
@@ -177,11 +260,16 @@ def chat(client: OpenAI):
 
                 finish_reason = chunk["choices"][0].get("finish_reason")
                 if finish_reason:
+                    total_tokens = chunk["usage"].get("total_tokens")
                     print("\n")
                     resp = ''.join(content)
-                    file.write(history_path, user, mode='a')  # 将用户输入写入历史记录
-                    system = {"identity": config.get("assistant_name"), "time": timestamp ,"content": resp}
-                    file.write(history_path, system, mode='a')
+                    # 将用户输入写入历史记录
+                    history.append(user_msg)
+                    # 将助手输出写入历史记录
+                    history.append({"role": "assistant", "content": resp})
+                    # 将历史记录写入文件
+                    with open(history_path, "w", encoding="utf-8") as f:
+                        json.dump(history, f, ensure_ascii=False, indent=4)
                     if finish_reason == "length":
                         print("\n输出终止：单次输出字数达到上限（本次对话已记录）\n")
                     elif finish_reason == "content_filter":
@@ -189,9 +277,7 @@ def chat(client: OpenAI):
                     # 工具调用
                     elif finish_reason ==  "tool_calls":
                         calls = dict(sorted(calls.items()))  # 排序
-                        history = file.read(history_path)
-                        msg = message(memory, history)
-                        msg.append(     # 返回工具调用请求
+                        history.append(     # 返回工具调用请求
                             {"role": "assistant", "content": None, "tool_calls": [
                                 {
                                     "id": call["id"],
@@ -206,7 +292,6 @@ def chat(client: OpenAI):
                             name = call["function"]["name"]
                             call_id = call["id"]
                             arg = json.loads(call["function"]["arguments"])
-                            print(f"\n正在调用：{name}，参数：{arg}")      # 调用
                             # 调用工具
                             if arg.get("path") and (arg.get("content") is not None):
                                 res = str(tool.io(name, arg["path"], arg["content"]))
@@ -220,56 +305,63 @@ def chat(client: OpenAI):
                                     else str(tool.io(name, arg["path"], arg["end"], arg["start"]))
                             elif arg.get("path"):
                                 res = str(tool.io(name, arg["path"]))
+                            elif arg.get("content") and arg.get("num"):
+                                if arg.get("time") and arg.get("role"):
+                                    res = str(manager.search_memory(arg["content"], arg["num"], arg["time"], arg["role"]))
+                                elif arg.get("time"):
+                                    res = str(manager.search_memory(arg["content"], arg["num"], arg["time"]))
+                                elif arg.get("role"):
+                                    res = str(manager.search_memory(arg["content"], arg["num"], role=arg["role"]))
+                                else:
+                                    res = str(manager.search_memory(arg["content"], arg["num"]))
+                            elif arg.get("memory_text"):
+                                res = str(manager.specify_memory(arg["memory_text"]))
+                            elif arg.get("query"):
+                                if arg.get("top"):
+                                    res = str(manager.online_search(arg["query"], arg["top"]))
+                                else:
+                                    res = str(manager.online_search(arg["query"]))
                             else:
                                 res = "参数错误"
-                            msg.append(
+                            history.append(
                                 {"role": "tool", "tool_call_id": call_id, "content": res}
                             )
                             # 记录工具调用
-                            tool_call = {"identity": config.get("assistant_name") + "(tool_call)", "time": timestamp , \
-                                            "content": f"调用工具：{name}；参数：{str(arg)}；结果：{res}"}
-                            file.write(history_path, tool_call, mode='a')
-                        # 返回工具调用结果
-                        response = client.chat.completions.create(
-                            model=config.get("model"),
-                            tools=tools,
-                            messages=msg,
-                            stream=True,
-                            reasoning_effort=config.get("reasoning_effort"),
-                            extra_body=config.get("extra_body")
-                        )
-
+                            with open(history_path, "w", encoding="utf-8") as f:
+                                json.dump(history, f, ensure_ascii=False, indent=4)
+            timestamp = history[0].get("content")
+            if timestamp:
+                timestamp = timestamp[0].get("text")
+                if timestamp:
+                    timestamp = datetime.strptime(timestamp[1:9], "%y-%m-%d").date()
+            keep = ((datetime.now() - timedelta(days=c.h_days))).date()
+            if total_tokens > c.h_tokens or timestamp < keep:
+                mem.update()
+            with open(source / "memory" / "images_data.jsonl", "r", encoding="utf-8") as f:
+                size = 0
+                for line in f:
+                    data = json.loads(line).get("size")
+                    if data:
+                        size += data
+            if size > 47185920:
+                mem.update()
+                    
 
             if finish_reason != "tool_calls":
                 if finish_reason is None:
                     print("\n输出终止：原因未知，可能是网络问题（本次对话未记录）\n")
                 break
+            else:
+                # 重新构造消息
+                    msg = history
+                    msg = system_msg + msg
+                    # 返回工具调用结果
+                    response = client.chat.completions.create(
+                        model=c.model,
+                        tools=tools,
+                        messages=msg,
+                        stream=True,
+                        reasoning_effort=c.reasoning_effort,
+                        extra_body=c.extra_body
+                    )
  
-def message(memory, history):
-    # 获取提示词所在路径
-    if getattr(sys, "frozen", False):
-        source = Path(sys.executable).parent
-    else:
-        source = Path(__file__).parent.parent
-        
-    system_prompt = source / "system.md"
-    
-    environ = platform.system()
-    if not system_prompt.exists():
-        if not system_prompt.parent.exists():
-            system_prompt.parent.mkdir(parents=True)
-        system_prompt.touch()
-    system_prompt = file.read(system_prompt)
-    msg =   [
-                {"role": "system", "content": "[Long-term Memory]\n" + memory},
-                {"role": "system", "content": f"[Environment: {environ}]" + system_prompt},
-                {"role": "assistant", "content": "[Conversation History]\n" + history},
-            ]
-
-    # 获取图片记忆
-    if config.get("image_memory"):
-            images_memory_path = source / "memory" / "images_memory.json"
-            with open(images_memory_path, "r", encoding="utf-8") as f:
-                msg += json.load(f)
-
-    return msg

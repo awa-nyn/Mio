@@ -3,7 +3,7 @@ user_name = "User"    # 用户名称
 assistant_name = "Assistant"    # 助手名称
 
 [Images]     # 图片配置
-upload = false  # 是否启用图片上传功能。仅多模态模型支持，非多模态模型使用会报错
+upload = true  # 是否启用图片上传功能。仅多模态模型支持，非多模态模型使用会报错
 # 支持图片类型：jpg、jpeg、png、gif（动态仅提取首帧）、webp（动态仅提取首帧）
 
 Files_API = true  # 采用Files API上传图片，会比通常模式保存的图片多。上一个配置项开启时有效

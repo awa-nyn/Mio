@@ -1,35 +1,25 @@
-import signal
-# 处理 Ctrl+C 信号
-def ctrl_c(signum, frame):
-    pass
-
-signal.signal(signal.SIGINT, ctrl_c)
-
 from dotenv import load_dotenv
 from openai import OpenAI
 from openai import APIError
-import os
 from core import config
-from core.ai_client import chat
+from core import ai_client
 
-# 加载环境变量
-if config.get("env"):
-    load_dotenv()
-    api_key = os.environ.get(config.get("api_key_name"))
-else:
-    api_key = config.get("api_key")
 
 # 初始化OpenAI API
-try:
-    client = OpenAI(
-        api_key=api_key, 
-        base_url=config.get("base_url"))
-except APIError:
-    print("API连接失败，请检查网络或API Key配置是否正确")
-    exit(1)
+def client_get():
+    try:
+        client = OpenAI(
+            api_key=config.c.api_key, 
+            base_url=config.c.base_url
+        )
+    except APIError:
+        print("API连接失败，请检查网络或API Key配置是否正确")
+        exit(1)
+    return client
 
-# 调用chat函数
-try:
-    chat(client)
-except KeyboardInterrupt:
-    print("进程终止：强制退出")
+if __name__ == "__main__":
+    # 调用chat函数
+    try:
+        ai_client.chat(client_get())
+    except KeyboardInterrupt:
+        print("进程终止：强制退出")

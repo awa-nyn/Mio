@@ -3,6 +3,7 @@ import sys
 from typing import Self
 import shutil
 import sqlite3
+import chromadb
 from utils import file
 from core.config import c
 import platform
@@ -97,13 +98,14 @@ class ToolManager:
                     return self._lsr(p)
                 elif confirm == "n" or confirm == "N":
                     return c.user + "拒绝了你的请求"
+        else:
+            print(f"正在递归查看目录：{str(p)}")
 
     
     def _lsr(self, p, msg=None, i=-1, last=False):
         # 初始化
         if msg is None:
             msg = str(p) + "/\n"
-
         # 排序
         ls = self._ls(p)
         if ls == "访问失败，权限不足":
@@ -168,6 +170,7 @@ class ToolManager:
 
     def ls(self):
         p: Path =self.path
+        print(f"正在查看目录：{str(p)}")
         msg = str(p) + "/:\n"
         ls = self._ls(p)
         if ls == "访问失败，权限不足":
@@ -190,6 +193,8 @@ class ToolManager:
     @confirm("读取", needness = c.read)
     def read(self):
         p: Path = self.path
+        if not c.read:
+            print(f"正在读取文件：{str(p)}")
         return str(file.read(p))
 
     @confirm("读取", needness = c.read)
@@ -197,6 +202,8 @@ class ToolManager:
         if start < 1:
             start = 1
         p = self.path
+        if not c.read:
+            print(f"正在读取文件：{str(p)}，从第{start}行到第{end}行")
         content = []
         with open(p, 'r') as f:
             for i, line in enumerate(f, start=1):
@@ -209,30 +216,38 @@ class ToolManager:
     @confirm("写入", needness = c.write_a)
     def write_a(self, content):
         p: Path = self.path
+        if not c.write_a:
+            print(f"正在写入文件：{str(p)}")
         file.write(p, content)
         return "写入成功"
 
     @confirm("修改", needness = c.write_w)
     def write_w(self, content):
         p: Path = self.path
+        if not c.write_w:
+            print(f"正在修改文件：{str(p)}")
         file.write(p, content, 'w')
         return "修改成功"
 
     @confirm("创建", needness = c.create)
     def create_d(self):
         p: Path = self.path
+        if not c.create:
+            print(f"正在创建目录：{str(p)}")
         p.mkdir(parents=True, exist_ok=True)
         return "创建成功"
 
     @confirm("创建", needness = c.create)
     def create_f(self):
         p: Path = self.path
+        if not c.create:
+            print(f"正在创建文件：{str(p)}")
         if not p.parent.exists():
             p.parent.mkdir(parents=True, exist_ok=True)
         p.touch(exist_ok=True)
         return "创建成功"
 
-    @confirm("删除", needness = c.delete)
+    @confirm("删除", needness = True)
     def delete(self):
         return self._del()
     
@@ -275,6 +290,8 @@ class ToolManager:
     def move(self):
         src = self.source
         dst = self.dest
+        if not c.move:
+            print(f"正在移动：{str(src)} 到 {str(dst)}")
         if not dst.exists():
             dst.mkdir(parents=True, exist_ok=True)
         elif src.is_dir() and dst.is_file():
@@ -290,6 +307,8 @@ class ToolManager:
     def copy(self):
         src = self.source
         dst = self.dest
+        if not c.copy:
+            print(f"正在复制：{str(src)} 到 {str(dst)}")
         if not dst.exists():
             dst.mkdir(parents=True, exist_ok=True)
         elif src.is_dir() and dst.is_file():
@@ -312,24 +331,36 @@ class ToolManager:
     @confirm("重命名", needness = c.rename)
     def rename(self, name):
         p = self.path
+        if not c.rename:
+            print(f"正在重命名：{str(p)} 为 {name}")
         p.rename(p.parent / name)
+        return "重命名成功"
 
     @confirm("获取信息", needness = c.info)
     def info(self):
         p = self.path
+        if not c.info:
+            print(f"正在获取文件信息：{str(p)}")
         return str(p.stat())
 
     @confirm("搜索")
-    def search(self, keyword, type=""):
+    def search(self, keyword, type_=""):
         p = self.path
+        if not c.search:
+            if type_ == "file":
+                print(f"正在搜索：{str(p)} 下的文件，关键字：{keyword}")
+            elif type_ == "dir":
+                print(f"正在搜索：{str(p)} 下的目录，关键字：{keyword}")
+            else:
+                print(f"正在搜索：{str(p)}下的内容，关键字：{keyword}")
         ls = []
         for item in p.rglob(keyword):
             files = str(item.relative_to(p))
-            if not type:
+            if not type_:
                 ls.append(files) if item.is_file() else ls.append(files + "/")
-            elif type == "file" and item.is_file():
+            elif type_ == "file" and item.is_file():
                 ls.append(files)
-            elif type == "dir" and item.is_dir():
+            elif type_ == "dir" and item.is_dir():
                 ls.append(files + "/")
 
         return '\n'.join(ls)
@@ -337,6 +368,8 @@ class ToolManager:
     @confirm("读取", needness = c.read)
     def read_docx(self):
         p: Path = self.path
+        if not c.read:
+            print(f"正在读取文件：{str(p)}")
         return str(docx.docx_to_md(p))
 
     @confirm("写入", needness = c.overwrite_docx)
@@ -344,6 +377,8 @@ class ToolManager:
         if not c.docx:
             return "未启用docx文件写入功能，请要求用户在配置文件中启用并重新运行程序"
         p: Path = self.path
+        if not c.overwrite_docx:
+            print(f"正在写入docx文件：{str(p)}")
         return str(docx.md_to_docx(p, content))
 
 
@@ -355,6 +390,7 @@ def specify_memory(memory_text):
         source = Path(__file__).parent.parent
     db_path = source / "memory" / "memory.db"
     c.exist(db_path)
+    print(f"正在指定记忆：{memory_text}")
     with sqlite3.connect(db_path) as conn:
         cursor = conn.cursor()
         cursor.execute(
@@ -365,3 +401,123 @@ def specify_memory(memory_text):
             '''
             )
         cursor.execute("INSERT INTO specified_memory (memory) VALUES (?)", (memory_text,))
+    return f"已指定记忆：{memory_text}"
+
+def search_memory(content, num, time=None, role=None):
+    # 连接数据库
+    if getattr(sys, "frozen", False):
+        source = Path(sys.executable).parent
+    else:
+        source = Path(__file__).parent.parent
+    memory_path = source / "memory" / "memory"
+    client = chromadb.PersistentClient(path=str(memory_path))
+    collection = client.get_or_create_collection("memories")
+    result = collection.get(limit=1)
+    if not result['ids']:
+        return "目前没有任何记忆。"
+    if time and role:
+        result = collection.query(
+            query_texts=[content],
+            n_results=num,
+            where={"timestamp": {"$contains": time}, "source": role}
+        )
+    elif time:
+        result = collection.query(
+            query_texts=[content],
+            n_results=num,
+            where={"timestamp": {"$contains": time}}
+        )
+    elif role:
+        result = collection.query(
+            query_texts=[content],
+            n_results=num,
+            where={"source": role}
+        )
+    else:
+        result = collection.query(
+            query_texts=[content],
+            n_results=num
+        )
+    if not result['ids'][0]:
+        return "未找到相关记忆。"
+    return "\n".join(result['documents'][0])
+
+def online_search(content: str, top=5):
+    if not c.online_search:
+        print("在线搜索功能未启用")
+        return "在线搜索功能未启用"
+    import requests
+    import time
+    print(f"正在搜索：{content}")
+    BASE_URL = c.search_base_url
+    API_KEY = c.search_api_key
+    HEADERS = {
+        "Authorization": f"Bearer {API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    params = {
+        "messages": [
+            {
+                "role": "user",
+                "content": content,
+            }
+        ],
+        "search_source": "baidu_search_v2",
+        "resource_type_filter": [{
+                "type": "web",
+                "top_k": top
+            }]
+        }
+
+    for attempt in range(4):
+        try:
+            resp = requests.post(BASE_URL, json=params, headers=HEADERS, timeout=15)
+            http_s = resp.status_code
+            if resp.status_code != 200:
+                err_body = resp.json() if resp.content else {}
+                err_code = err_body.get("error", {}).get("code")
+                err_msg = err_body.get("error", {}).get("message", f"HTTP {resp.status_code}")
+                if http_s in (500, 502, 503, 429) or err_code in (1, 2):
+                    sleep_time = 1.5 * (2 ** attempt)
+                    time.sleep(sleep_time)
+                    continue
+                else:
+                    if err_code == 17:
+                        print("请求失败，原因：今日免费额度已用完")
+                        return "请求失败，原因：今日免费额度已用完"
+                    elif http_s in (401, 403):
+                        print("请求失败，原因：API Key无效或权限不足")
+                        return "请求失败，原因：API Key无效或权限不足"
+                    else:
+                        print(f"请求失败，HTTP状态码：{resp.status_code}，错误信息：{err_msg}")
+                        return f"请求失败，HTTP状态码：{resp.status_code}，错误信息：{err_msg}"
+
+            data: dict= resp.json()
+            results = data.get("references", [])
+            if not results:
+                return "未找到相关内容。"
+            result = []
+            for item in results:
+                item: dict
+                result.append({
+                    "title" : item.get("title"),
+                    "url": item.get("url"),
+                    "description": item.get("content")
+                })
+            
+            return_ = []
+            for idx, item in enumerate(result, start=1):
+                print(f"结果 {idx}:")
+                print(f"\t标题: {item['title']}")
+                print(f"\t链接: {item['url']}")
+                print(f"\t描述: {item['description']}\n")
+                return_.append(f"结果 {idx}:[标题: {item['title']},链接: {item['url']},描述: {item['description']}]")
+            return "\n".join(return_)
+        except requests.exceptions.RequestException as e:
+            if attempt < 2:
+                time.sleep(1.5 * (2 ** attempt))
+                print(f"请求失败，正在重试...（{attempt + 1}/3）")
+            else:
+                print(f"请求失败，请检查网络连接或稍后再试。{str(e)}")
+                return f"请求失败，错误信息：{str(e)}"

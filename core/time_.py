@@ -1,8 +1,9 @@
+import json
 from pathlib import Path
 import sys
-from utils import file
 from datetime import datetime
-from config import c
+from core.config import c
+
 
 def get():
     now = datetime.now()
@@ -28,6 +29,7 @@ def get():
     
     
 def awareness():
+    from utils import file
     # 获取当前时间对象
     now = datetime.now()
 
@@ -37,14 +39,25 @@ def awareness():
         source = Path(__file__).parent.parent
 
     # 定位最后一次时间戳路径
-    last_path = source / "memory" / "last_timestamp.txt"
+    last_path = source / "memory" / "last_timestamp.json"
     c.exist(last_path)
-    last = file.read(last_path)
+    if last_path.stat().st_size == 0:
+        with open(last_path, "w") as f:
+            json.dump({"timestamp": now.strftime("%Y-%m-%d %H:%M"), "last_year": datetime.now().year}, f)
+            return "[System Message]首次对话\n"
+
+    timestamp = file.read(last_path)
+    last = timestamp.get("timestamp", "")
 
 
     # 如果不为空，则计算时间差
     if last:
-        last = datetime.strptime(last, "%Y-%m-%d %H:%M")
+        try:
+            last = datetime.strptime(last, "%Y-%m-%d %H:%M")
+        except ValueError:
+            with open(last_path, "w") as f:
+                json.dump({"timestamp": "", "last_year": datetime.now().year}, f)
+            return "[System Message]首次对话\n"
         delta = now - last
         hour = delta.seconds // 3600
 
@@ -69,6 +82,17 @@ def awareness():
     else:
         msg = "[System Message]首次对话\n"
 
-    file.write(last_path, now.strftime("%Y-%m-%d %H:%M"), mode="w")
+    timestamp["timestamp"] = now.strftime("%Y-%m-%d %H:%M")
+
+    if now.year > timestamp.get("last_year"):
+        timestamp["last_year"] = now.year
+        import chromadb
+        memory_path = source / "memory" / "memory"
+        client = chromadb.PersistentClient(path=str(memory_path))
+        collection = client.get_or_create_collection("memories")
+        collection.delete(where={"year": {"$lt": now.year - 1}}) 
+
+    with open(last_path, "w") as f:
+        json.dump(timestamp, f)
     return msg
         
