@@ -519,3 +519,44 @@ def online_search(content: str, top=5):
             else:
                 print(f"请求失败，请检查网络连接或稍后再试。{str(e)}")
                 return f"请求失败，错误信息：{str(e)}"
+
+def cmd(command: str, content):
+    if platform.system() == "Windows":
+        ban = ["Format-Volume", "del", "Remove-Item", "Clear-Disk", "Stop-Computer", "Restart-Computer", "shutdown", "Remove-ItemProperty", "Remove-ItemPropertyValue"]
+    elif platform.system() == "Linux":
+        ban = ["sudo", "rm", "dd", "shutdown", "reboot", "halt", ":(){ :|:& };:", "mkfs", "mkswap", "chmod"]
+    else:
+        return "不支持的操作系统"
+
+    name = command.split()[0]
+    if name.lower() in ban or name[:5] == "/dev/":
+        print(f"尝试执行危险命令：{command}，已禁止")
+        return "禁止执行危险命令"
+
+    inp = input(f"{c.assistant}尝试执行命令：{command}，说明：{content}。是否同意？（y/n）")
+    if inp.lower() != "y":
+        print("已拒绝执行命令")
+        return "用户拒绝执行命令"
+    inp = input(f"请再次确认你已理解命令含义，执行请输入不携带参数的命令名称，即第一个单词。输入其他内容将取消执行。")
+
+    if inp != name:
+        print("已取消执行命令")
+        return "用户取消执行命令"
+
+    import subprocess
+    try:
+        result = subprocess.run(command, shell=True, capture_output=True, text=True) if platform.system() != "Windows" \
+            else subprocess.run(
+                ["powershell.exe", "-Command", command],
+                capture_output=True,
+                text=True
+            )
+        if result.returncode == 0:
+            print(f"命令执行成功，输出：{result.stdout}")
+            return f"命令执行成功，输出：{result.stdout}"
+        else:
+            print(f"命令执行失败，错误信息：{result.stderr}")
+            return f"命令执行失败，错误信息：{result.stderr}"
+    except Exception as e:
+        print(f"命令执行异常，错误信息：{str(e)}")
+        return f"命令执行异常，错误信息：{str(e)}"

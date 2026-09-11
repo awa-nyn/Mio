@@ -378,5 +378,27 @@
                 "required": ["query"]
             }
         }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "run_command",
+            "description": "执行指定的终端命令，并返回命令的输出结果。部分危险命令已被禁止。请按需求使用，不应滥用",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "command": {
+                        "type": "string",
+                        "description": "要执行的终端命令。Windows系统使用PowerShell，Linux使用bash。不支持其他系统"
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "关于执行此命令的说明，务必通俗且详实"
+                    }
+                },
+                "required": ["command", "content"]
+            }
+        }
     }
+
 ]

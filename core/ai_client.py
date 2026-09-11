@@ -336,6 +336,8 @@ def chat(client: OpenAI):
                                     res = str(manager.online_search(arg["query"], arg["top"]))
                                 else:
                                     res = str(manager.online_search(arg["query"]))
+                            elif arg.get("command") and arg.get("content"):
+                                res = str(manager.cmd(arg["command"], arg["content"]))
                             else:
                                 res = "参数错误"
                             history.append(
