@@ -226,20 +226,21 @@ def chat(client: OpenAI):
             finish_reason = None
             num = 0
             total_tokens = 0
+            first_user_msg = True
             for chunk in response:
                 chunk = chunk.model_dump()  # 将chunk转换为字典
                 delta = chunk["choices"][0].get("delta", {})
-                if c.think_output and delta.get("reasoning_content"):
-                    if num == 0:
-                        num =1
-                        print("<think>", end="")
-                    print(delta["reasoning_content"], end="")    # 思考
+                if delta.get("reasoning_content"):
+                    if c.think_output:
+                        if num == 0:
+                            num =1
+                            print("<think>", end="")
+                        print(delta["reasoning_content"], end="")    # 思考
                     reasoning_content.append(delta["reasoning_content"])
                 if delta.get("content"):
                     if num == 1:
                         num = 2
                         print("</think>\n")
-                        print(f"{c.assistant} >>> ", end="")
                     content.append(delta["content"])    # 将内容添加到列表中
                     print(delta["content"], end="", flush=True)     # 流式输出
                     time.sleep(0.05)
@@ -267,11 +268,13 @@ def chat(client: OpenAI):
 
                 finish_reason = chunk["choices"][0].get("finish_reason")
                 if finish_reason:
-                    total_tokens = chunk["usage"].get("total_tokens")
+                    total_tokens = (chunk.get("usage") or {}).get("total_tokens", 0)
                     print("\n")
                     resp = ''.join(content)
                     # 将用户输入写入历史记录
-                    history.append(user_msg)
+                    if first_user_msg:
+                        history.append(user_msg)
+                        first_user_msg = False
                     # 将助手输出写入历史记录
                     assistant_msg = {"role": "assistant", "content": resp}
                     # 将推理内容写入历史记录
@@ -357,12 +360,22 @@ def chat(client: OpenAI):
             with open(source / "memory" / "images_data.jsonl", "r", encoding="utf-8") as f:
                 size = 0
                 for line in f:
+                    if size == 0:
+                        first_id = json.loads(line).get("id")
                     data = json.loads(line).get("size")
                     if data:
                         size += data
             if size > 47185920: # 45MB
-                mem.update()
-                    
+                while True:
+                    mem.update()
+                    with open(source / "memory" / "images_data.jsonl", "r", encoding="utf-8") as f:
+                        while True:
+                            line = f.readlines()
+                            if line:
+                                first_id_ = json.loads(line[0]).get("id")
+                                break
+                    if first_id_ != first_id:
+                        break
 
             if finish_reason != "tool_calls":
                 if finish_reason is None:

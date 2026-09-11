@@ -51,15 +51,19 @@ def upload_images():
                 # 压缩图片尺寸
                 img = Image.open(image)
                 img.thumbnail((800, 800), Image.Resampling.LANCZOS)
+                tmp_path = Path(tmpdir) / f"{Path(image).name}"
                 if _mime(image) == "image/png":
-                    img.save(Path(tmpdir) / f"{Path(image).name}.webp", format="WebP", quality=80)
+                    tmp_path = tmp_path.with_suffix(".webp")
+                    img.save(tmp_path, format="WebP", quality=80)
                 elif _mime(image) == "image/gif":
-                    img.save(Path(tmpdir) / f"{Path(image).name}.jpeg", format="JPEG", quality=80)
+                    tmp_path = tmp_path.with_suffix(".jpeg")
+                    img.save(tmp_path, format="JPEG", quality=80)
                 else:
-                    img.save(Path(tmpdir) / f"{Path(image).name}.{_mime(image).split('/')[-1]}", quality=80)
+                    tmp_path = tmp_path.with_suffix(f".{_mime(image).split('/')[-1]}")
+                    img.save(tmp_path, quality=80)
 
                 # 转换为base64
-                with open(Path(tmpdir) / f"{Path(image).name}.{_mime(image).split('/')[-1]}", "rb") as f:
+                with open(tmp_path, "rb") as f:
                     b64 = base64.b64encode(f.read()).decode("utf-8")
                     eql = b64.count("=")
                     # 记录
@@ -69,7 +73,7 @@ def upload_images():
                     data = {"id": image_id, "size": size}
                     file.write(images_data, data)
                     n += 1
-                    uploads.append({"type": "image_url", "image_url": {"url": f"data:{_mime(image)};base64,{b64}"}, "id": image_id})
+                    uploads.append({"type": "image_url", "image_url": {"url": f"data:{_mime(tmp_path)};base64,{b64}"}, "id": image_id})
 
         if len(uploads) == len(images_list):
             print("上传成功！\n")

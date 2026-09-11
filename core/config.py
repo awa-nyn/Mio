@@ -154,7 +154,10 @@ class Config():
             for k in a_k:
                 if k:
                     key.append(k)
-        self.api_key = random.choice(key)
+        if key:
+            self.api_key = random.choice(key)
+        else:
+            raise ValueError("没有设置API Key，请在配置文件中设置。")
         self.online_search = _ensure_value(api_config, "OnlineSearch", "enable", default=False)
         _ensure_value(api_config, "OnlineSearch", "api_key", default=["",], type_=list)
         _ensure_value(api_config, "OnlineSearch", "api_key_name", default=["",], type_=list)
@@ -171,7 +174,11 @@ class Config():
             for sk in s_a_k:
                 if sk:
                     skey.append(sk)
-        self.search_api_key = random.choice(skey)
+        if self.online_search:
+            if skey:
+                self.search_api_key = random.choice(skey)
+            else:
+                raise ValueError("没有设置搜索API Key，请在配置文件中设置。")
 
 
 c = Config()

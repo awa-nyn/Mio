@@ -374,8 +374,6 @@ class ToolManager:
 
     @confirm("写入", needness = c.overwrite_docx)
     def write_docx(self, content):
-        if not c.docx:
-            return "未启用docx文件写入功能，请要求用户在配置文件中启用并重新运行程序"
         p: Path = self.path
         if not c.overwrite_docx:
             print(f"正在写入docx文件：{str(p)}")
