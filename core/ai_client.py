@@ -221,6 +221,7 @@ def chat(client: OpenAI):
         print(f"\n{c.assistant} >>> ", end="")
         while True:
             content = []
+            reasoning_content = []
             calls = {}
             finish_reason = None
             num = 0
@@ -233,6 +234,7 @@ def chat(client: OpenAI):
                         num =1
                         print("<think>", end="")
                     print(delta["reasoning_content"], end="")    # 思考
+                    reasoning_content.append(delta["reasoning_content"])
                 if delta.get("content"):
                     if num == 1:
                         num = 2
@@ -271,7 +273,12 @@ def chat(client: OpenAI):
                     # 将用户输入写入历史记录
                     history.append(user_msg)
                     # 将助手输出写入历史记录
-                    history.append({"role": "assistant", "content": resp})
+                    assistant_msg = {"role": "assistant", "content": resp}
+                    # 将推理内容写入历史记录
+                    if reasoning_content:
+                        reasoning = ''.join(reasoning_content)
+                        assistant_msg["reasoning_content"] = reasoning
+                    history.append(assistant_msg)
                     # 将历史记录写入文件
                     with open(history_path, "w", encoding="utf-8") as f:
                         json.dump(history, f, ensure_ascii=False, indent=4)
@@ -334,6 +341,7 @@ def chat(client: OpenAI):
                             # 记录工具调用
                             with open(history_path, "w", encoding="utf-8") as f:
                                 json.dump(history, f, ensure_ascii=False, indent=4)
+            # 检查历史记录是否需要更新
             timestamp = history[0].get("content")
             if timestamp:
                 timestamp = timestamp[0].get("text")
@@ -342,13 +350,17 @@ def chat(client: OpenAI):
             keep = ((datetime.now() - timedelta(days=c.h_days))).date()
             if total_tokens > c.h_tokens or timestamp < keep:
                 mem.update()
+
+            # 检查图片数据文件大小，超过限制则更新历史记录
+            if not (source / "memory" / "images_data.jsonl").exists():
+                c.exist(source / "memory" / "images_data.jsonl")
             with open(source / "memory" / "images_data.jsonl", "r", encoding="utf-8") as f:
                 size = 0
                 for line in f:
                     data = json.loads(line).get("size")
                     if data:
                         size += data
-            if size > 47185920:
+            if size > 47185920: # 45MB
                 mem.update()
                     
 
