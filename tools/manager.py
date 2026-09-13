@@ -130,7 +130,7 @@ class ToolManager:
 
                         if item.is_dir():   # 如果是文件夹
                             msg += "/\n"
-                            return self.lsr(item, msg, i+1, b)
+                            return self._lsr(item, msg, i+1, b)
                         else:   # 如果是文件
                             return msg + "\n"
                     else:   # 如果是在根目录最后一个文件夹内
@@ -141,7 +141,7 @@ class ToolManager:
                         msg += f"└────{item.name}"
                         if item.is_dir():
                             msg += "/\n"
-                            return self.lsr(item, msg, i+1, last)
+                            return self._lsr(item, msg, i+1, last)
                         else:
                             return msg + "\n"
                 else:   # 如果不是最后一个文件
@@ -153,7 +153,7 @@ class ToolManager:
                         msg += f"├────{item.name}"
                         if item.is_dir():
                             msg += "/\n"
-                            msg = self.lsr(item, msg, i+1)
+                            msg = self._lsr(item, msg, i+1)
                         else:
                             msg += "\n"
                     else:
@@ -164,7 +164,7 @@ class ToolManager:
                         msg += f"├────{item.name}"
                         if item.is_dir():
                             msg += "/\n"
-                            msg = self.lsr(item, msg, i+1)
+                            msg = self._lsr(item, msg, i+1)
                         else:
                             msg += "\n"
 
@@ -513,7 +513,7 @@ def online_search(content: str, top=5):
                 return_.append(f"结果 {idx}:[标题: {item['title']},链接: {item['url']},描述: {item['description']}]")
             return "\n".join(return_)
         except requests.exceptions.RequestException as e:
-            if attempt < 2:
+            if attempt < 3:
                 time.sleep(1.5 * (2 ** attempt))
                 print(f"请求失败，正在重试...（{attempt + 1}/3）")
             else:
@@ -560,3 +560,4 @@ def cmd(command: str, content):
     except Exception as e:
         print(f"命令执行异常，错误信息：{str(e)}")
         return f"命令执行异常，错误信息：{str(e)}"
+
