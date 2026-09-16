@@ -413,18 +413,18 @@ def search_memory(content, num, time=None, role=None):
     result = collection.get(limit=1)
     if not result['ids']:
         return "目前没有任何记忆。"
-    if time and role:
+    if time:
         result = collection.query(
             query_texts=[content],
-            n_results=num,
-            where={"timestamp": {"$contains": time}, "source": role}
+            n_results=collection.count(),
+            where={"source": role} if role else None,
+            include=["documents", "metadatas"]
         )
-    elif time:
-        result = collection.query(
-            query_texts=[content],
-            n_results=num,
-            where={"timestamp": {"$contains": time}}
-        )
+        docs = [d for d, m in zip(result["documents"][0], result["metadatas"][0])
+                if str(m.get("timestamp", "")).startswith(time)][:num]
+        if not docs:
+            return "未找到相关记忆。"
+        return "\n".join(docs)
     elif role:
         result = collection.query(
             query_texts=[content],

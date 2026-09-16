@@ -1,10 +1,12 @@
 from datetime import datetime, timedelta
 import time
+import uuid
 from prompt_toolkit import PromptSession
 from openai import OpenAI
 from pathlib import Path
 from openai import omit
 import sys
+import asyncio
 from openai import APIError
 import json
 import platform
@@ -12,23 +14,72 @@ import sqlite3
 from core.config import c
 
 session = PromptSession(multiline=True)
+# 获取路径
+if getattr(sys, "frozen", False):
+    source = Path(sys.executable).parent
+else:
+    source = Path(__file__).parent.parent
 
 # 对话逻辑
 def chat(client: OpenAI):
+    asyncio.run(_chat(client))
+
+async def _chat(client: OpenAI):
     from utils import file
     from core import time_
     from core import mem
     from tools import tool
     from core.commands import act
     from tools import manager
+
+    # 检查历史记录是否需要更新
+
+    c.exist(source / "memory" / "history.json")
+    c.exist(source / "memory" / "token.json")
+    with open(source / "memory" / "history.json", "r", encoding="utf-8") as f:
+        history = json.load(f)
+    total_tokens = 0
+    if (source / "memory" / "token.json").stat().st_size != 0:
+        with open(source / "memory" / "token.json", "r", encoding="utf-8") as f:
+            total_tokens = json.load(f).get("total_tokens", 0)
+    if not history:
+        timestamp = history[0].get("content").get("text")
+        timestamp = datetime.strptime(timestamp[1:9], "%y-%m-%d").date()
+        keep = ((datetime.now() - timedelta(days=c.h_days))).date()
+        # 是否超出天数
+        if timestamp < keep:
+            mem.update()
+        # 是否超出token数
+        elif total_tokens > c.h_tokens:
+            mem.update()
+            with open(source / "memory" / "token.json", "w", encoding="utf-8") as f:
+                json.dump({"total_tokens": 0}, f, ensure_ascii=False, indent=4)
+
+    # 检查图片数据文件大小，超过限制则更新历史记录
+    c.exist(source / "memory" / "images_data.jsonl")
+    with open(source / "memory" / "images_data.jsonl", "r", encoding="utf-8") as f:
+        size = 0
+        for line in f:
+            if size == 0:
+                first_id = json.loads(line).get("id")
+            data = json.loads(line).get("size")
+            if data:
+                size += data
+    if size > 47185920: # 45MB
+        while True:
+            mem.update()
+            with open(source / "memory" / "images_data.jsonl", "r", encoding="utf-8") as f:
+                while True:
+                    line = f.readlines()
+                    if line:
+                        first_id_ = json.loads(line[0]).get("id")
+                        break
+            if first_id_ != first_id:
+                break
+
     print("发送消息（Alt + Enter提交）:")
 
     while True:
-        # 获取路径
-        if getattr(sys, "frozen", False):
-            source = Path(sys.executable).parent
-        else:
-            source = Path(__file__).parent.parent
         history_path = source / "memory" / "history.json"
         # 读取各文件内容
         if not history_path.exists():
@@ -217,7 +268,16 @@ def chat(client: OpenAI):
         except APIError as e:
             print(f"请求失败，可能是模型或其他配置问题，错误信息：{e}")
             continue
-        
+
+        # TTS
+        if c.tts and not c.free:
+            from TTS.voice import TTS
+            session_id = str(uuid.uuid4())
+            tts = TTS(section_id=session_id)
+            await tts.start()
+
+
+        # 流式请求
         print(f"\n{c.assistant} >>> ", end="")
         while True:
             content = []
@@ -225,7 +285,6 @@ def chat(client: OpenAI):
             calls = {}
             finish_reason = None
             num = 0
-            total_tokens = 0
             first_user_msg = True
             for chunk in response:
                 chunk = chunk.model_dump()  # 将chunk转换为字典
@@ -243,7 +302,9 @@ def chat(client: OpenAI):
                         print("</think>\n")
                     content.append(delta["content"])    # 将内容添加到列表中
                     print(delta["content"], end="", flush=True)     # 流式输出
-                    time.sleep(0.05)
+                    if c.tts and not c.free:
+                        await tts.put_text(delta["content"])   # 将内容放入队列中
+                    await asyncio.sleep(0.05)
                 if delta.get("tool_calls"):     # 如果存在工具调用
                     tool_calls = delta["tool_calls"]
                     for item in tool_calls:     # 遍历工具调用列表
@@ -268,7 +329,12 @@ def chat(client: OpenAI):
 
                 finish_reason = chunk["choices"][0].get("finish_reason")
                 if finish_reason:
+                    # 更新总token数
                     total_tokens = (chunk.get("usage") or {}).get("total_tokens", 0)
+                    if total_tokens:
+                        c.exist(source / "memory" / "token.json")
+                        with open(source / "memory" / "token.json", "w", encoding="utf-8") as f:
+                            json.dump({"total_tokens": total_tokens}, f, ensure_ascii=False, indent=4)
                     print("\n")
                     resp = ''.join(content)
                     # 将用户输入写入历史记录
@@ -346,45 +412,18 @@ def chat(client: OpenAI):
                             # 记录工具调用
                             with open(history_path, "w", encoding="utf-8") as f:
                                 json.dump(history, f, ensure_ascii=False, indent=4)
-            # 检查历史记录是否需要更新
-            timestamp = history[0].get("content")
-            if timestamp:
-                timestamp = timestamp[0].get("text")
-                if timestamp:
-                    timestamp = datetime.strptime(timestamp[1:9], "%y-%m-%d").date()
-            keep = ((datetime.now() - timedelta(days=c.h_days))).date()
-            if total_tokens > c.h_tokens or timestamp < keep:
-                mem.update()
-
-            # 检查图片数据文件大小，超过限制则更新历史记录
-            if not (source / "memory" / "images_data.jsonl").exists():
-                c.exist(source / "memory" / "images_data.jsonl")
-            with open(source / "memory" / "images_data.jsonl", "r", encoding="utf-8") as f:
-                size = 0
-                for line in f:
-                    if size == 0:
-                        first_id = json.loads(line).get("id")
-                    data = json.loads(line).get("size")
-                    if data:
-                        size += data
-            if size > 47185920: # 45MB
-                while True:
-                    mem.update()
-                    with open(source / "memory" / "images_data.jsonl", "r", encoding="utf-8") as f:
-                        while True:
-                            line = f.readlines()
-                            if line:
-                                first_id_ = json.loads(line[0]).get("id")
-                                break
-                    if first_id_ != first_id:
-                        break
 
             if finish_reason != "tool_calls":
                 if finish_reason is None:
+                    if c.tts and not c.free:
+                        await tts.put_text(0)
                     print("\n输出终止：原因未知，可能是网络问题（本次对话未记录）\n")
+                if c.tts and not c.free:
+                    await tts.put_text(1)
                 break
             else:
                 # 重新构造消息
+                try:
                     msg = history
                     msg = system_msg + msg
                     # 返回工具调用结果
@@ -396,4 +435,9 @@ def chat(client: OpenAI):
                         reasoning_effort=c.reasoning_effort,
                         extra_body=c.extra_body
                     )
- 
+                except APIError as e:
+                    print(f"再次请求失败，错误信息：{e}")
+                    break
+
+        if c.tts and not c.free:
+            await tts.finish()

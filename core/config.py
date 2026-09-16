@@ -27,41 +27,8 @@ def _ensure_value(config, table_path, key, default=None, type_ = bool):
 
 class Config():
     def __init__(self):
-        self.user = None
-        self.assistant = None
-        self.upload_images = None
-        self.files_api = None
-        self.image_memory = None
-        self.read = None
-        self.write_a = None
-        self.write_w = None
-        self.create = None
-        self.move = None
-        self.copy = None
-        self.rename = None
-        self.info = None
-        self.search = None
-        self.lsr = None
-        self.overwrite_docx = None
-        self.h_days = None
-        self.h_tokens = None
-        self.q = None
-        self.rc = None
-        self.i = None
-        self.di = None
-        self.rv = None
-        self.lm = None
-        self.dm = None
-        self.reset = None
-        self.base_url = None
-        self.model = None
-        self.tool = None
-        self.reasoning_effort = None
-        self.extra_body = None
-        self.think_output = None
-        self.api_key = None
-        self.online_search = None
-        self.search_api_key = None
+        self.tts = None
+
 
     @staticmethod
     def exist(path: Path):
@@ -71,6 +38,9 @@ class Config():
             path.touch()
 
     def load(self):
+
+
+
         # 获取配置文件路径
         if getattr(sys, "frozen", False):
             source = Path(sys.executable).parent
@@ -115,6 +85,19 @@ class Config():
         self.search = _ensure_value(normal_config, "Confirm", "search_file", default=False)
         self.lsr = _ensure_value(normal_config,"Confirm" ,"view_files_list_recursive", default=True)
         self.overwrite_docx = _ensure_value(normal_config, "Confirm", "overwrite_docx", default=True)
+        # 语音合成配置
+        self.tts_speed = _ensure_value(normal_config, "Voice", "speed", default=0, type_=int)
+        if self.tts_speed < -50 or self.tts_speed > 100:
+            raise ValueError("TTS语速必须在[-50, 100]范围内。")
+        self.tts_loudness = _ensure_value(normal_config, "Voice", "loudness", default=0, type_=int)
+        if self.tts_loudness < -50 or self.tts_loudness > 100:
+            raise ValueError("TTS音量必须在[-50, 100]范围内。")
+        self.tts_pitch = _ensure_value(normal_config, "Voice", "pitch", default=0, type_=int)
+        if self.tts_pitch < -12 or self.tts_pitch > 12:
+            raise ValueError("TTS音调必须在[-12, 12]范围内。")
+        self.max_parenthesis_length = _ensure_value(normal_config, "Voice", "max_length_to_filter_parenthesis", default=0, type_=int)
+        if self.max_parenthesis_length < 0:
+            raise ValueError("过滤括号内内容的最大长度必须大于等于0。")
 
         # 记忆配置
         self.h_days = _ensure_value(memory_config, "Memory", "max_history_days", default=7, type_=int)
@@ -139,13 +122,11 @@ class Config():
         self.extra_body = _ensure_value(api_config, "OpenAI", "extra_body", default={}, type_=dict)
         self.think_output = _ensure_value(api_config, "OpenAI", "think_output", default=True)
         # api_key
-        _ensure_value(api_config, "OpenAI", "api_key", default=["",], type_=list)
-        _ensure_value(api_config, "OpenAI.env", "api_key_name", default=["",], type_=list)
-        self.env = _ensure_value(api_config, "OpenAI.env", "env", default=False)
-        a_k = api_config["OpenAI"]["api_key"]
-        a_k_n = api_config["OpenAI"]["env"]["api_key_name"]
+        a_k = _ensure_value(api_config, "OpenAI", "api_key", default=["",], type_=list)
+        a_k_n = _ensure_value(api_config, "OpenAI.env", "api_key_name", default=["",], type_=list)
+        env = _ensure_value(api_config, "OpenAI.env", "env", default=False)
         key = []
-        if self.env:
+        if env:
             load_dotenv()
             for k in a_k_n:
                 if k:
@@ -159,14 +140,11 @@ class Config():
         else:
             raise ValueError("没有设置API Key，请在配置文件中设置。")
         self.online_search = _ensure_value(api_config, "OnlineSearch", "enable", default=False)
-        _ensure_value(api_config, "OnlineSearch", "api_key", default=["",], type_=list)
-        _ensure_value(api_config, "OnlineSearch", "api_key_name", default=["",], type_=list)
+        s_a_k = _ensure_value(api_config, "OnlineSearch", "api_key", default=["",], type_=list)
+        s_a_k_n = _ensure_value(api_config, "OnlineSearch", "api_key_name", default=["",], type_=list)
         self.search_base_url = _ensure_value(api_config, "OnlineSearch", "base_url", default="", type_=str)
-        s_a_k = api_config["OnlineSearch"]["api_key"]
-        s_a_k_n = api_config["OnlineSearch"]["api_key_name"]
         skey = []
-        if self.env:
-            load_dotenv()
+        if env:
             for sk in s_a_k_n:
                 if sk:
                     skey.append(os.environ.get(sk))
@@ -180,6 +158,32 @@ class Config():
             else:
                 raise ValueError("没有设置搜索API Key，请在配置文件中设置。")
 
+        # TTS
+        self.tts = _ensure_value(api_config, "TTS", "enable", default=False)
+        self.free = _ensure_value(api_config, "TTS", "free", default=False)
+        t_a_k = _ensure_value(api_config, "TTS", "api_key", default=["",], type_=list)
+        t_a_k_n = _ensure_value(api_config, "TTS", "api_key_name", default=["",], type_=list)
+        tkey = []
+        if self.tts:
+            if not self.free:
+                if env:
+                    for tk in t_a_k_n:
+                        if tk:
+                            tkey.append(os.environ.get(tk))
+                else:
+                    for tk in t_a_k:
+                        if tk:
+                            tkey.append(tk)
+                if tkey:
+                    self.tts_api_key = random.choice(tkey)
+                else:
+                    raise ValueError("没有设置TTS API Key，请在配置文件中设置。")
+                self.tts_model = _ensure_value(api_config, "TTS", "model", default="seed-tts-2.0", type_=str)
+                if not self.tts_model:
+                    raise ValueError("没有设置TTS模型，请在配置文件中设置。")
+                self.tts_speaker = _ensure_value(api_config, "TTS", "speaker", default="", type_=str)
+                if not self.tts_speaker:
+                    raise ValueError("没有配置TTS音色，请在配置文件中设置。")
 
 c = Config()
 c.load()

@@ -42,6 +42,7 @@ def update():
     collection = client_db.get_or_create_collection("memories")
     history: list = file.read(history_path)
     time_needness = (datetime.now() - timedelta(days=c.h_days)).date()
+    first_timestamp = datetime.strptime(history[0]["content"][0]["text"][1:9], "%y-%m-%d")
     while True:
         if not history:
             break
@@ -126,11 +127,18 @@ def update():
                 )
             # 删除历史记录
             del history[0]
-            if history[0]["role"] == "user":
+            if not history or history[0]["role"] == "user":
                 break
 
-        
-        # 如果时间戳大于所需时间，则停止循环
+        if not history:
+            break
         timestamp = datetime.strptime(history[0]["content"][0]["text"][1:9], "%y-%m-%d")
+        # 至少清理一天
+        if timestamp.date() == first_timestamp.date():
+            continue
+        # 如果时间戳大于所需时间，则停止循环
         if timestamp.date() > time_needness:
             break
+
+    with open(history_path, "w", encoding="utf-8") as f:
+        json.dump(history, f, ensure_ascii=False, indent=4)
