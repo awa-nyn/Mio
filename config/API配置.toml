@@ -39,10 +39,7 @@ api_key_name = [
 ]
 
 [TTS]   # 语音合成API配置
-enable = true   # 是否启用语音合成
-
-free = false   # 在启用语音合成的情况下，是否使用免费语音合成服务，若为true，则下方配置无效
-# 非免费服务仅支持火山引擎
+enable = true   # 是否启用语音合成，仅支持火山引擎
 
 api_key = [
     "",

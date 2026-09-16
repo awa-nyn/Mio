@@ -270,7 +270,7 @@ async def _chat(client: OpenAI):
             continue
 
         # TTS
-        if c.tts and not c.free:
+        if c.tts:
             from TTS.voice import TTS
             session_id = str(uuid.uuid4())
             tts = TTS(section_id=session_id)
@@ -302,7 +302,7 @@ async def _chat(client: OpenAI):
                         print("</think>\n")
                     content.append(delta["content"])    # 将内容添加到列表中
                     print(delta["content"], end="", flush=True)     # 流式输出
-                    if c.tts and not c.free:
+                    if c.tts:
                         await tts.put_text(delta["content"])   # 将内容放入队列中
                     await asyncio.sleep(0.05)
                 if delta.get("tool_calls"):     # 如果存在工具调用
@@ -415,10 +415,10 @@ async def _chat(client: OpenAI):
 
             if finish_reason != "tool_calls":
                 if finish_reason is None:
-                    if c.tts and not c.free:
+                    if c.tts:
                         await tts.put_text(0)
                     print("\n输出终止：原因未知，可能是网络问题（本次对话未记录）\n")
-                if c.tts and not c.free:
+                if c.tts:
                     await tts.put_text(1)
                 break
             else:
@@ -439,5 +439,5 @@ async def _chat(client: OpenAI):
                     print(f"再次请求失败，错误信息：{e}")
                     break
 
-        if c.tts and not c.free:
+        if c.tts:
             await tts.finish()

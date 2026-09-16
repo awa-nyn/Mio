@@ -160,30 +160,28 @@ class Config():
 
         # TTS
         self.tts = _ensure_value(api_config, "TTS", "enable", default=False)
-        self.free = _ensure_value(api_config, "TTS", "free", default=False)
         t_a_k = _ensure_value(api_config, "TTS", "api_key", default=["",], type_=list)
         t_a_k_n = _ensure_value(api_config, "TTS", "api_key_name", default=["",], type_=list)
         tkey = []
         if self.tts:
-            if not self.free:
-                if env:
-                    for tk in t_a_k_n:
-                        if tk:
-                            tkey.append(os.environ.get(tk))
-                else:
-                    for tk in t_a_k:
-                        if tk:
-                            tkey.append(tk)
-                if tkey:
-                    self.tts_api_key = random.choice(tkey)
-                else:
-                    raise ValueError("没有设置TTS API Key，请在配置文件中设置。")
-                self.tts_model = _ensure_value(api_config, "TTS", "model", default="seed-tts-2.0", type_=str)
-                if not self.tts_model:
-                    raise ValueError("没有设置TTS模型，请在配置文件中设置。")
-                self.tts_speaker = _ensure_value(api_config, "TTS", "speaker", default="", type_=str)
-                if not self.tts_speaker:
-                    raise ValueError("没有配置TTS音色，请在配置文件中设置。")
+            if env:
+                for tk in t_a_k_n:
+                    if tk:
+                        tkey.append(os.environ.get(tk))
+            else:
+                for tk in t_a_k:
+                    if tk:
+                        tkey.append(tk)
+            if tkey:
+                self.tts_api_key = random.choice(tkey)
+            else:
+                raise ValueError("没有设置TTS API Key，请在配置文件中设置。")
+            self.tts_model = _ensure_value(api_config, "TTS", "model", default="seed-tts-2.0", type_=str)
+            if not self.tts_model:
+                raise ValueError("没有设置TTS模型，请在配置文件中设置。")
+            self.tts_speaker = _ensure_value(api_config, "TTS", "speaker", default="", type_=str)
+            if not self.tts_speaker:
+                raise ValueError("没有配置TTS音色，请在配置文件中设置。")
 
 c = Config()
 c.load()
