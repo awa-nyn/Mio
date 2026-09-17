@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-import time
 import uuid
 from prompt_toolkit import PromptSession
 from openai import OpenAI
@@ -42,8 +41,8 @@ async def _chat(client: OpenAI):
     if (source / "memory" / "token.json").stat().st_size != 0:
         with open(source / "memory" / "token.json", "r", encoding="utf-8") as f:
             total_tokens = json.load(f).get("total_tokens", 0)
-    if not history:
-        timestamp = history[0].get("content").get("text")
+    if history:
+        timestamp = history[0].get("content")[0].get("text")
         timestamp = datetime.strptime(timestamp[1:9], "%y-%m-%d").date()
         keep = ((datetime.now() - timedelta(days=c.h_days))).date()
         # 是否超出天数
@@ -91,7 +90,7 @@ async def _chat(client: OpenAI):
         # 输入逻辑
         images_list = []
         while True:
-            input_msg = session.prompt(f"{c.user} >>> ")
+            input_msg = await session.prompt_async(f"{c.user} >>> ")
             return_ = act(input_msg)
             if return_:
                 if c.upload_images:
@@ -302,7 +301,7 @@ async def _chat(client: OpenAI):
                         print("</think>\n")
                     content.append(delta["content"])    # 将内容添加到列表中
                     print(delta["content"], end="", flush=True)     # 流式输出
-                    if c.tts:
+                    if c.tts and not tts.connect_err:
                         await tts.put_text(delta["content"])   # 将内容放入队列中
                     await asyncio.sleep(0.05)
                 if delta.get("tool_calls"):     # 如果存在工具调用
@@ -415,10 +414,10 @@ async def _chat(client: OpenAI):
 
             if finish_reason != "tool_calls":
                 if finish_reason is None:
-                    if c.tts:
+                    if c.tts and not tts.connect_err:
                         await tts.put_text(0)
                     print("\n输出终止：原因未知，可能是网络问题（本次对话未记录）\n")
-                if c.tts:
+                elif c.tts and not tts.connect_err:
                     await tts.put_text(1)
                 break
             else:

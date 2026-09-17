@@ -7,6 +7,7 @@ from core.config import c
 import uuid
 import sounddevice as sd
 import copy
+import wave
 from TTS.protocols import (
     EventType,
     MsgType,
@@ -24,9 +25,13 @@ URL = "wss://openspeech.bytedance.com/api/v3/tts/bidirection"
 class TTS:
     def __init__(self, section_id: str):
         self.section_id = section_id
+        self.stream = None
         self.connect_err = False
         self.api_err = False
         self.recv_task = None
+        self.send_task = None
+        self.webs = None
+        self.rcv_err = False
 
     async def put_text(self, text):
         await self.queue.put(text)
@@ -55,6 +60,13 @@ class TTS:
 
             self.audio_rcv = False
 
+            additions = {
+                        "max_length_to_filter_parenthesis": c.max_parenthesis_length,
+                        "disable_markdown_filter": True,
+                        "disable_emoji_filter": True,
+                        "post_process": {"pitch": c.tts_pitch},
+                        "section_id": self.section_id
+                    }
             # 开始会话
             self.base_rqst = {
                 "req_params": {
@@ -65,13 +77,7 @@ class TTS:
                         "speech_rate": c.tts_speed,
                         "loudness_rate": c.tts_loudness,
                     },
-                    "addition": {
-                        "max_length_to_filter_parenthesis": c.max_parenthesis_length,
-                        "disable_markdown_filter": True,
-                        "disable_emoji_filter": True,
-                        "post_process": {"pitch": c.tts_pitch},
-                        "section_id": self.section_id
-                    }
+                    "additions": json.dumps(additions)
                 }
             }
 
@@ -91,23 +97,27 @@ class TTS:
                 text = await self.queue.get()
                 if text == 1:   # 正常结束
                     await finish_session(self.webs, self.section_id)
-                    return
+                    break
                 if text == 0:   # 异常结束
                     await finish_session(self.webs, self.section_id)
                     print("TTS: 因对话输出异常中断，TTS发送终止信号")
                     if self.recv_task:
                         self.recv_task.cancel()
-                    return
+                    raise ValueError("TTS: 因对话输出异常中断，TTS发送终止信号")
                 
                 synthesis_rqst = copy.deepcopy(self.base_rqst)
                 synthesis_rqst["event"] = EventType.TaskRequest
                 synthesis_rqst["req_params"]["text"] = text
                 await task_request(self.webs, json.dumps(synthesis_rqst).encode(), self.section_id)
                 await asyncio.sleep(0.005)
+
+        except ValueError:
+            raise
         except Exception as e:
             print("TTS: 向TTS发送消息失败:", e)
             if self.recv_task:
                 self.recv_task.cancel()
+            raise
 
     async def receive(self):
         # 创建一个字节数组来存储音频数据
@@ -116,10 +126,10 @@ class TTS:
         # 循环接收音频数据
         self.stream = None
         try:
-            self.stream = sd.OutputStream(   # 播放音频数据
+            self.stream = sd.RawOutputStream(   # 播放音频数据
                 samplerate=32000,
                 channels=1,
-                dtype='int32'
+                dtype='int16'
             )
             self.stream.start()
             while True:
@@ -131,28 +141,38 @@ class TTS:
                 elif msg.type == MsgType.AudioOnlyServer:
                     self.audio_rcv = True
                     self.audio_data.extend(msg.payload)
-                    self.stream.write(msg.payload)
+                    await asyncio.to_thread(self.stream.write, msg.payload)
                 else:
                     print("TTS: 收到未知类型消息:", msg)
-                    break
+                    raise ValueError("TTS: 收到未知类型消息:", msg)
+        except ValueError:
+            self.rcv_err = True
+            raise
         except asyncio.CancelledError:
             print("TTS: 发送中断，接收任务已取消")
             self.audio_data = None
+            self.rcv_err = True
+            raise
         except Exception as e:
             print("TTS: 接收音频数据失败:", e)
             self.audio_data = None
+            self.rcv_err = True
+            raise
 
     async def save(self):
         if self.audio_data:
-            audio_format = self.base_rqst["req_params"]["audio_params"]["format"]
             if getattr(sys, 'frozen', False):
                 source = Path(sys.executable).parent
             else:
                 source = Path(__file__).parent.parent
-            audio_file = source / "audio" / f"{self.section_id}.{audio_format}"
+            audio_file = source / "audio" / f"{self.section_id}.wav"
             c.exist(audio_file)
-            with open(audio_file, "wb") as f:
-                f.write(self.audio_data)
+            with wave.open(str(audio_file), "wb") as w:
+                w: wave.Wave_write
+                w.setnchannels(1)
+                w.setsampwidth(2)
+                w.setframerate(32000)
+                w.writeframes(self.audio_data)
 
         if self.audio_data is None:
             return
@@ -172,15 +192,16 @@ class TTS:
 
     async def finish(self):
         try:
-            await asyncio.gather(self.send_task, self.recv_task, return_exceptions=True)
-            await self.save()
+            if not self.connect_err:
+                await asyncio.gather(self.send_task, self.recv_task, return_exceptions=True)
+                await self.save()
         finally:
             # 结束连接
             if self.stream:
                 self.stream.stop()
                 self.stream.close()
-            if not self.connect_err:
+            if not self.connect_err and not self.rcv_err:
                 await finish_connection(self.webs)
                 await wait_for_event(self.webs, MsgType.FullServerResponse, EventType.ConnectionFinished)
-            if not self.api_err:
+            if not self.webs:
                 await self.webs.close()
