@@ -20,8 +20,11 @@ def _select_files():
 def _mime(path):
     return magic.from_file(path, mime=True)
 
-def upload_images():
-    images_list = _select_files()
+def upload_images(path_lst=[]):
+    if path_lst:
+        images_list = path_lst
+    else:
+        images_list = _select_files()
     if not images_list:
         print("未选择图片。")
         return None
@@ -38,7 +41,8 @@ def upload_images():
     
     if not c.files_api:
         import base64
-        print("正在上传...\n")
+        if not path_lst:
+            print("正在上传...\n")
         # 创建临时目录
         import tempfile
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -76,11 +80,14 @@ def upload_images():
                     uploads.append({"type": "image_url", "image_url": {"url": f"data:{_mime(tmp_path)};base64,{b64}"}, "id": image_id})
 
         if len(uploads) == len(images_list):
-            print("上传成功！\n")
+            if not path_lst:
+                print("上传成功！\n")
         elif len(uploads) > 0:
-            print("部分内容上传成功...\n")
+            if not path_lst:
+                print("部分内容上传成功...\n")
         else:
-            print("上传失败，请重试\n")
+            if not path_lst:
+                print("上传失败，请重试\n")
             return None
         return uploads
 

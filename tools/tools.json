@@ -399,6 +399,99 @@
                 "required": ["command", "content"]
             }
         }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "create_default_workflow",
+            "description": "创建ComfyUI默认绘画工作流。大致流程为：选择模型->第一次采样获得初始图像->图像缩放->第二次采样->保存图像。或者也可参考获取的默认工作流自行创建工作流。",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "工作流名称，格式为“xxx.json”。若与已有工作流名称重复，则会覆盖原有工作流"
+                    },
+                    "checkpoint": {
+                        "type": "string",
+                        "description": "指定的模型文件名，格式为“xxx.ckpt”或“xxx.safetensors”。确保模型文件存在于ComfyUI的models/checkpoints目录下"
+                    },
+                    "positive": {
+                        "type": "string",
+                        "description": "正向提示词"
+                    },
+                    "negative": {
+                        "type": "string",
+                        "description": "反向提示词"
+                    },
+                    "width": {
+                        "type": "integer",
+                        "description": "生成初始图像的宽度，默认896"
+                    },
+                    "height": {
+                        "type": "integer",
+                        "description": "生成初始图像的高度，默认896"
+                    },
+                    "zoom": {
+                        "type": "number",
+                        "description": "在第二个采样器前会对图像进行缩放，此参数为图像缩放系数，默认1.5"
+                    },
+                    "zoom_scale": {
+                        "type": "string",
+                        "description": "图像缩放算法，可选值为：nearest-exact、bilinear、bicubic、area、bislerp，默认nearest-exact"
+                    },
+                    "steps": {
+                        "type": "integer",
+                        "description": "两个采样器的采样步数，默认20"
+                    },
+                    "cfg1": {
+                        "type": "number",
+                        "description": "第一个采样器的提示词引导系数，默认7.0"
+                    },
+                    "cfg2": {
+                        "type": "number",
+                        "description": "第二个采样器的提示词引导系数，默认5.0"
+                    },
+                    "sampler": {
+                        "type": "string",
+                        "description": "两个采样器的采样器名称，默认euler。可选值为：euler、euler_cfg_pp、euler_ancestral、heun、dpm_2、dpm_2_ancestral、dpm_fast、dpm_2m_cfg_pp等"
+                    },
+                    "scheduler": {
+                        "type": "string",
+                        "description": "两个采样器的调度器名称，默认normal。可选值为：normal、karras、exponential、simple、sgm_uniform、ddim_uniform、beta、linear_quadratic、kl_optimal，没有等"
+                    },
+                    "denoise": {
+                        "type": "number",
+                        "description": "第二个采样器的去噪强度，默认0.3"
+                    },
+                    "filename_prefix": {
+                        "type": "string",
+                        "description": "保存图像的文件名前缀，默认“ComfyUI”"
+                    },
+                    "depth": {
+                        "type": "integer",
+                        "description": "位深，可选值为8或16，默认8"
+                    }
+                },
+                "required": ["name", "checkpoint"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "paint",
+            "description": "使用工作流进行绘画",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "工作流文件的绝对路径。确保此工作流文件存在且可用"
+                    }
+                },
+                "required": ["path"]
+            }
+        }
     }
-
 ]

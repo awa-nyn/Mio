@@ -19,6 +19,22 @@ Files_API = true  # 采用Files API上传图片，会比通常模式保存的图
 # MiniMax：不支持
 # 其他平台请自行查阅API文档
 
+[Paint]  # 绘画配置。使用ComfyUI进行绘制
+enable = true  # 是否启用绘画功能。若不启用，则无需配置
+# 无论使用哪种路径配置方式，都需要确保此路径为ComfyUI的根目录，避免出现ComfyUI/ComfyUI的情况
+# 若使用秋叶或其他作者打包的启动器，应当找到ComfyUI在启动器目录下的位置，并使用绝对路径配置方式
+sibling_path = true # 若将ComfyUI目录放在了Agent同级目录下（不是在Agent目录内），则设置为true。开启此项请确保ComfyUI目录名为"ComfyUI“
+
+# 若上方配置为false，则需要手动配置ComfyUI的路径
+absolute_path = ""  # ComfyUI的绝对路径，若上方配置为true，则此项无效。路径应当包含ComfyUI的根目录，如：/home/user/ComfyUI
+
+port = 8188  # ComfyUI的端口号，默认8188。若ComfyUI启动时使用了其他端口，请在此处修改为对应端口号
+
+custom_output_path = ""  # 自定义图像输出路径，若不设置，则使用默认路径。若设置了此项，则图像将保存到此路径下
+# 若路径不存在，请确保此路径所在目录下无同名文件
+# 默认输出路径为ComfyUI根目录下的output文件夹
+
+
 [Voice]  # 语音合成配置。若未在API配置中开启TTS，则此处配置无效
 speed = 0  # 语速，范围[-50, 100]，默认0为1倍速，100为2倍速，-50为0.5倍速，以此类推
 loudness = 0  # 音量，范围[-50, 100]，默认0为正常音量，100为2倍音量，-50为0.5倍音量，以此类推
@@ -37,6 +53,7 @@ rename_file = false  # 重命名文件或目录
 get_file_info = false  # 获取文件或目录信息
 search_file = false  # 搜索文件或目录
 view_files_list_recursive = true  # 查看目录下的所有文件列表，包括子目录
+paint = true  # 调用ComfyUI进行绘画
 
 
 overwrite_docx = true  # 是否需要确认Agent对docx文件的编辑操作。

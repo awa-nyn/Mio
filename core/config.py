@@ -39,8 +39,6 @@ class Config():
 
     def load(self):
 
-
-
         # 获取配置文件路径
         if getattr(sys, "frozen", False):
             source = Path(sys.executable).parent
@@ -73,6 +71,23 @@ class Config():
         # Images
         self.upload_images = _ensure_value(normal_config, "Images", "upload", default=False)
         self.files_api = _ensure_value(normal_config, "Images", "Files_API", default=False)
+        # Paint
+        self.paint = _ensure_value(normal_config, "Paint", "enable", default=False)
+        if self.paint:
+            if _ensure_value(normal_config, "Paint", "sibling_path", default=True):
+                if getattr(sys, "frozen", False):
+                    self.comfyui_path = Path(sys.executable).parent.parent / "ComfyUI"
+                else:
+                    self.comfyui_path = Path(__file__).parent.parent.parent / "ComfyUI"
+            else:
+                self.comfyui_path = _ensure_value(normal_config, "Paint", "absolute_path", default="", type_=str)
+                if not self.comfyui_path:
+                    raise ValueError("ComfyUI路径未设置，请检查配置文件中的路径设置。")
+                self.comfyui_path = Path(self.comfyui_path)
+            if not self.comfyui_path.exists():
+                raise ValueError("ComfyUI路径不存在，请检查配置文件中的路径设置。")
+            self.comfyui_port = _ensure_value(normal_config, "Paint", "port", default=8188, type_=int)
+            self.output_path = _ensure_value(normal_config, "Paint", "custom_output_path", default="", type_=str)
         # Confirm
         self.read = _ensure_value(normal_config, "Confirm", "view_file", default=False)
         self.write_a = _ensure_value(normal_config, "Confirm", "append_file", default=True)
@@ -85,6 +100,7 @@ class Config():
         self.search = _ensure_value(normal_config, "Confirm", "search_file", default=False)
         self.lsr = _ensure_value(normal_config,"Confirm" ,"view_files_list_recursive", default=True)
         self.overwrite_docx = _ensure_value(normal_config, "Confirm", "overwrite_docx", default=True)
+        self.paint_confirm = _ensure_value(normal_config, "Confirm", "paint", default=True)
         # 语音合成配置
         self.tts_speed = _ensure_value(normal_config, "Voice", "speed", default=0, type_=int)
         if self.tts_speed < -50 or self.tts_speed > 100:

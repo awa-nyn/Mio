@@ -11,6 +11,8 @@ import json
 import platform
 import sqlite3
 from core.config import c
+from utils.paint import workflow
+
 
 session = PromptSession(multiline=True)
 # 获取路径
@@ -32,6 +34,8 @@ async def _chat(client: OpenAI):
     from tools import manager
 
     # 检查历史记录是否需要更新
+
+    wf = None
 
     c.exist(source / "memory" / "history.json")
     c.exist(source / "memory" / "token.json")
@@ -252,6 +256,35 @@ async def _chat(client: OpenAI):
         # 构造消息
         system_msg.append({"role": "system", "content":f"Environment: {platform.system()}\n" + system})
         msg = system_msg + msg
+        # 接收绘制图片
+        if c.paint and wf is not None:
+            if wf.upload:
+                msg_info += ""
+                comfyui_id = []
+                comfyui_items = []
+                for image in wf.upload:
+                    image: dict
+                    if image.get("file_id"):
+                        comfyui_items.append(image)
+                    else:
+                        comfyui_id.append(image["id"])
+                        image.pop("id")
+                        files.append(image)
+                if comfyui_id:
+                    msg_info += "[System: 此为ComfyUI绘制成功的提示消息，非用户输入][ComfyUI绘制完成："
+                    msg_info += "/".join(comfyui_id)
+                    msg_info += "]"
+                else:
+                    msg_info += "[System: 此为ComfyUI绘制成功的提示消息，非用户输入]"
+
+                msg_info = wf.timestamp + msg_info
+                comfui_history = {"role": "user",
+                    "content": [{"type": "text", "text": msg_info},
+                    ]}
+                comfui_history["content"].append(comfyui_items)
+                msg.append(comfui_history)
+                wf = None
+            
         msg.append(user_msg)
 
         # 构造请求
@@ -278,13 +311,13 @@ async def _chat(client: OpenAI):
 
         # 流式请求
         print(f"\n{c.assistant} >>> ", end="")
+        first_user_msg = True
         while True:
             content = []
             reasoning_content = []
             calls = {}
             finish_reason = None
             num = 0
-            first_user_msg = True
             for chunk in response:
                 chunk = chunk.model_dump()  # 将chunk转换为字典
                 delta = chunk["choices"][0].get("delta", {})
@@ -383,7 +416,7 @@ async def _chat(client: OpenAI):
                             elif arg.get("path") and (arg.get("end") or arg.get("end") == 0):
                                 res = str(tool.io(name, arg["path"], arg["end"])) if arg.get("start") is None \
                                     else str(tool.io(name, arg["path"], arg["end"], arg["start"]))
-                            elif arg.get("path"):
+                            elif arg.get("path") and name != "paint":
                                 res = str(tool.io(name, arg["path"]))
                             elif arg.get("content") and arg.get("num"):
                                 if arg.get("time") and arg.get("role"):
@@ -403,6 +436,45 @@ async def _chat(client: OpenAI):
                                     res = str(manager.online_search(arg["query"]))
                             elif arg.get("command") and arg.get("content"):
                                 res = str(manager.cmd(arg["command"], arg["content"]))
+                            elif name == "create_default_workflow":
+                                if not c.paint:
+                                    res = "绘画功能未启用，请在配置文件中启用绘画功能"
+                                else:
+                                    args = {}
+                                    for k, v in arg.items():
+                                        args[k] = v
+                                    wf = workflow()
+                                    res = str(wf.default(args))
+                            elif name == "paint":
+                                if not c.paint:
+                                    res = "绘画功能未启用，请在配置文件中启用绘画功能"
+                                else:
+                                    if not arg.get("path"):
+                                        res = "未指定工作流文件路径"
+                                    else:
+                                        wf = workflow()
+                                        conf = await wf.confirm()
+                                        if not conf:
+                                            res = f"{c.user}拒绝了你的请求"
+                                        else:
+                                            asyncio.create_task(wf.paint(Path(arg["path"])))
+                                            start_time = datetime.now()
+                                            time_out = timedelta(seconds=10)
+                                            while True:
+                                                if wf.success is None:
+                                                    if datetime.now() - start_time > time_out:
+                                                        wf.success = False
+                                                        continue
+                                                    await asyncio.sleep(0.5)
+                                                elif wf.success is False:
+                                                    res = f"无法连接到ComfyUI，请确保ComfyUI已启动并运行在端口 {c.comfyui_port} 上"
+                                                    break
+                                                else:
+                                                    if wf.success is True:
+                                                        res = f"已将绘画请求发送至ComfyUI，请耐心等待"
+                                                        break
+                                                    res = wf.success
+                                                    break
                             else:
                                 res = "参数错误"
                             history.append(
