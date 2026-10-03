@@ -1,6 +1,6 @@
 [OpenAI]
-base_url = "https://api.deepseek.com"
-model = "deepseek-v4-flash-vision-exp"
+base_url = ""
+model = ""
 tool = true     # 是否启用工具调用
 reasoning_effort = "high"   # 思考强度，可选值为 low、high、max
 extra_body = {thinking = {type = "enabled"}}    # 参考各服务商API指南进行配置
@@ -13,7 +13,7 @@ api_key = [
 ]
 
 [OpenAI.env]
-env = true     # 是否使用环境变量中的API_KEY，若使用，则上方的[OpenAI.api_key]配置无效
+env = false     # 是否使用环境变量中的API_KEY，若使用，则上方的[OpenAI.api_key]配置无效
 
 api_key_name = [
     "TEST_API_KEY",
@@ -22,7 +22,7 @@ api_key_name = [
 ]
 
 [OnlineSearch]  # 联网搜索API配置
-enable = true   # 是否启用联网搜索
+enable = false   # 是否启用联网搜索
 
 base_url = "https://qianfan.baidubce.com/v2/ai_search/web_search"   # 仅支持百度千帆————大概吧，其他的自己试试
 # 先看下方注释

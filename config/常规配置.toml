@@ -3,10 +3,10 @@ user_name = "User"    # 用户名称
 assistant_name = "Assistant"    # 助手名称
 
 [Images]     # 图片配置
-upload = true  # 是否启用图片上传功能。仅多模态模型支持，非多模态模型使用会报错
+upload = false  # 是否启用图片上传功能。仅多模态模型支持，非多模态模型使用会报错
 # 支持图片类型：jpg、jpeg、png、gif（动态仅提取首帧）、webp（动态仅提取首帧）
 
-Files_API = true  # 采用Files API上传图片，会比通常模式保存的图片多。上一个配置项开启时有效
+Files_API = false  # 采用Files API上传图片，会比通常模式保存的图片多。上一个配置项开启时有效
 # 请确保使用的模型所属的服务商支持OpenAI SDK的Files API
 # 此处提供一部分服务商的参考支持情况：
 # OpenAI：支持，但需手动开启功能，图片储存额外付费。参考费用：$0.20/GB/月
@@ -20,7 +20,7 @@ Files_API = true  # 采用Files API上传图片，会比通常模式保存的图
 # 其他平台请自行查阅API文档
 
 [Paint]  # 绘画配置。使用ComfyUI进行绘制
-enable = true  # 是否启用绘画功能。若不启用，则无需配置
+enable = false  # 是否启用绘画功能。若不启用，则无需配置
 # 无论使用哪种路径配置方式，都需要确保此路径为ComfyUI的根目录，避免出现ComfyUI/ComfyUI的情况
 # 若使用秋叶或其他作者打包的启动器，应当找到ComfyUI在启动器目录下的位置，并使用绝对路径配置方式
 sibling_path = true # 若将ComfyUI目录放在了Agent同级目录下（不是在Agent目录内），则设置为true。开启此项请确保ComfyUI目录名为"ComfyUI“
