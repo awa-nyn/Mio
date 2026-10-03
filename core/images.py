@@ -94,8 +94,8 @@ def upload_images(path_lst=[]):
     
     from main import client_get
     client = client_get()
-
-    print("正在上传...\n")
+    if not path_lst:
+        print("正在上传...\n")
     for image in images_list:
         if Path(image).stat().st_size / 1024 / 1024 > 64:
             return "size"
@@ -112,7 +112,7 @@ def upload_images(path_lst=[]):
         file.write(images_data, {"file_id": upload.id})
         uploads.append({"type": "file", "file_id": upload.id})
 
-
-    print("上传成功！\n")
+    if not path_lst:
+        print("上传成功！\n")
     return uploads
 

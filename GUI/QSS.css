@@ -1,0 +1,148 @@
+/* 主容器 */
+#mainContainer {
+    background-color: white;
+    border-radius: 12px;
+}
+
+/* 标题栏 */
+#titleBar {
+    background-color: #f5f5f5;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+}
+
+/* 名字 */
+#nameLabel {
+    font-size: 18px;
+    font-weight: bold;
+    color: black;
+}
+
+/* 状态标签 */
+#statusLabel {
+    font-size: 12px;
+    color: #888;
+}
+
+/* 标题栏按钮 */
+#avatarBtn, #settingsBtn, #moreBtn,
+#minBtn, #maxBtn, #closeBtn, #callBtn, #voiceBtn {
+    border: none;
+    color: black;
+    background-color: transparent;
+    padding: 6px;
+}
+
+/* 标题栏按钮鼠标悬停效果 */
+#avatarBtn:hover, #settingsBtn:hover, #moreBtn:hover,
+#minBtn:hover, #maxBtn:hover, #callBtn:hover, #voiceBtn:hover {
+    background-color: #e5e5e5;
+    border-radius: 6px;
+}
+
+/* 关闭按钮鼠标悬停效果 */
+#closeBtn:hover {
+    background-color: #ff4d4f;
+    border-radius: 6px;
+}
+
+/* 聊天滚动区 */
+#chatScroll {
+    background-color: white;
+    border: none;
+}
+
+/* 聊天内容区 */
+#chatScroll > QWidget > QWidget {
+    background-color: white;
+}
+
+/* 垂直滚动条 */
+#chatScroll QScrollBar:vertical {
+    background: transparent;
+    width: 8px;
+    margin: 0;
+}
+
+/* 垂直滚动条滑块 */
+#chatScroll QScrollBar::handle:vertical {
+    border: none;
+}
+
+/* 垂直滚动条上下箭头，隐藏 */
+#chatScroll QScrollBar::add-line:vertical,
+#chatScroll QScrollBar::sub-line:vertical {
+    height: 0;
+    background: transparent;
+}
+
+/* 底部状态栏 */
+#statusBar {
+    background-color: #f0f0f0;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+}
+
+/* 底部状态栏标签 */
+#statusBar QLabel {
+    font-size: 11px;
+    color: #999;
+    background: transparent;
+}
+
+/* 状态符号 */
+#statusDot, #statusBar #statusDotA {    
+    font-size: 10px;
+    color: #4caf50;
+}
+
+/* 分割线 */
+#divider, #dividerA, #dividerB, #dividerC, #dividerD {
+    background-color: #d0d0d0;
+}
+
+/* 输入区 */
+#inputArea {
+    background-color: white;
+    border-radius: 25px;
+    border: 1px solid #e0e0e0;
+}
+
+/* 输入框 */
+#inputEdit {
+    background-color: transparent;
+    border: none;
+    outline: none;
+    font-size: 20px;
+    color: #333;
+}
+
+/* 渐变遮罩 */
+#fadeMask {
+    background: qlineargradient(
+        x1:0, y1:0, x2:0, y2:1,
+        stop:0 rgba(255, 255, 255, 0),
+        stop:1 rgba(255, 255, 255, 1)
+    );
+}
+
+/* 头像下拉弹窗 */
+#avatarMenu {
+    background-color: white;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    border: 1px solid #e0e0e0;
+}
+
+#avatarMenu QPushButton {
+    background-color: transparent;
+    border: none;
+    text-align: left;
+    padding: 8px 8px;
+    font-size: 13px;
+    color: #333;
+}
+
+#avatarMenu QPushButton:hover {
+    background-color: #f0f0f0;
+}

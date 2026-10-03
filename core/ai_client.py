@@ -257,11 +257,12 @@ async def _chat(client: OpenAI):
         system_msg.append({"role": "system", "content":f"Environment: {platform.system()}\n" + system})
         msg = system_msg + msg
         # 接收绘制图片
+        comfyui_history = None
         if c.paint and wf is not None:
             if wf.upload:
-                msg_info += ""
-                comfyui_id = []
+                tip_info = ""
                 comfyui_items = []
+                comfyui_id = []
                 for image in wf.upload:
                     image: dict
                     if image.get("file_id"):
@@ -271,18 +272,17 @@ async def _chat(client: OpenAI):
                         image.pop("id")
                         files.append(image)
                 if comfyui_id:
-                    msg_info += "[System: 此为ComfyUI绘制成功的提示消息，非用户输入][ComfyUI绘制完成："
-                    msg_info += "/".join(comfyui_id)
-                    msg_info += "]"
+                    tip_info += "[System: 此为ComfyUI绘制成功的提示消息，非用户输入][ComfyUI绘制完成："
+                    tip_info += "/".join(comfyui_id)
+                    tip_info += "]"
                 else:
-                    msg_info += "[System: 此为ComfyUI绘制成功的提示消息，非用户输入]"
+                    tip_info += "[System: 此为ComfyUI绘制成功的提示消息，非用户输入]"
 
-                msg_info = wf.timestamp + msg_info
-                comfui_history = {"role": "user",
-                    "content": [{"type": "text", "text": msg_info},
+                comfyui_history = {"role": "user",
+                    "content": [{"type": "text", "text": wf.timestamp + tip_info},
                     ]}
-                comfui_history["content"].append(comfyui_items)
-                msg.append(comfui_history)
+                comfyui_history["content"].extend(comfyui_items)
+                msg.append(comfyui_history)
                 wf = None
             
         msg.append(user_msg)
@@ -371,6 +371,8 @@ async def _chat(client: OpenAI):
                     resp = ''.join(content)
                     # 将用户输入写入历史记录
                     if first_user_msg:
+                        if comfyui_history:
+                            history.append(comfyui_history)
                         history.append(user_msg)
                         first_user_msg = False
                     # 将助手输出写入历史记录
@@ -461,7 +463,10 @@ async def _chat(client: OpenAI):
                                             start_time = datetime.now()
                                             time_out = timedelta(seconds=10)
                                             while True:
-                                                if wf.success is None:
+                                                if wf.success == "path":
+                                                    res = f"工作流文件 {arg['path']} 不存在，请检查路径是否正确"
+                                                    break
+                                                elif wf.success is None:
                                                     if datetime.now() - start_time > time_out:
                                                         wf.success = False
                                                         continue

@@ -47,7 +47,7 @@
   },
   "6": {
     "inputs": {
-      "seed": 0,
+      "seed": -1,
       "steps": 20,
       "cfg": 7,
       "sampler_name": "euler",
@@ -91,7 +91,7 @@
   },
   "9": {
     "inputs": {
-      "seed": 0,
+      "seed": -1,
       "steps": 20,
       "cfg": 5,
       "sampler_name": "euler",

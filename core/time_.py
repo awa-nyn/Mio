@@ -95,4 +95,3 @@ def awareness():
     with open(last_path, "w") as f:
         json.dump(timestamp, f)
     return msg
-        

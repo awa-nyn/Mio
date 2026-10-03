@@ -4,6 +4,8 @@ import sys
 import asyncio
 import aiohttp
 import datetime
+import uuid
+import random
 from core.config import c
 from aiohttp import ClientConnectorError
 
@@ -100,6 +102,10 @@ class workflow:
             return True
 
     async def paint(self, path: Path):
+        if not path.exists():
+            print(f"工作流文件 {path} 不存在，请检查路径是否正确")
+            self.success = "path"
+            return
         address = f"http://127.0.0.1:{c.comfyui_port}"
         try:
             async with aiohttp.ClientSession() as session:
@@ -111,7 +117,13 @@ class workflow:
 
                 with open(path, "r", encoding="utf-8") as f:
                     workflow_data = json.load(f)
-                async with session.post(f"{address}/prompt", json={"prompt": workflow_data}) as resp:
+
+                for item in workflow_data.values():
+                    if "Sampler" in item["class_type"]:
+                        if item["inputs"].get("seed") is not None:
+                            if item["inputs"]["seed"] == -1:
+                                item["inputs"]["seed"] = random.randint(0, 2**32 - 1)
+                async with session.post(f"{address}/prompt", json={"prompt": workflow_data, "prompt_id": str(uuid.uuid4())}) as resp:
                     data = await resp.json()
                     data_id = data.get("prompt_id")
                     if not data_id:
@@ -147,7 +159,7 @@ class workflow:
         default_output_path = c.comfyui_path / "output"
         outputs_id = []
         for k, v in workflow_data.items():
-            if v["class_type"] == "SaveImage" or v["type"] == "SaveImageAdvanced":
+            if v["class_type"] == "SaveImage" or v["class_type"] == "SaveImageAdvanced":
                 outputs_id.append(k)
                 break
 
