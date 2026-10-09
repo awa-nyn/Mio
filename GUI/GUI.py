@@ -271,7 +271,7 @@ class Ui_MainWindow(object):
 
         self.avatarMenu = QWidget(self.mainContainer)
         self.avatarMenu.setObjectName(u"avatarMenu")
-        self.avatarMenu.setGeometry(QRect(240, 130, 541, 581))
+        self.avatarMenu.setGeometry(QRect(650, 510, 131, 201))
         sizePolicy.setHeightForWidth(self.avatarMenu.sizePolicy().hasHeightForWidth())
         self.avatarMenu.setSizePolicy(sizePolicy)
         self.verticalLayout = QVBoxLayout(self.avatarMenu)
@@ -404,7 +404,7 @@ class Ui_MainWindow(object):
 
         self.stack = QStackedWidget(self.mainContainer)
         self.stack.setObjectName(u"stack")
-        self.stack.setGeometry(QRect(60, 80, 881, 691))
+        self.stack.setGeometry(QRect(860, 640, 81, 131))
         sizePolicy.setHeightForWidth(self.stack.sizePolicy().hasHeightForWidth())
         self.stack.setSizePolicy(sizePolicy)
         self.stack.setMinimumSize(QSize(0, 0))
@@ -547,7 +547,7 @@ class Ui_MainWindow(object):
         self.promptEditArea.setWidgetResizable(True)
         self.promptEditWidget = QWidget()
         self.promptEditWidget.setObjectName(u"promptEditWidget")
-        self.promptEditWidget.setGeometry(QRect(0, -390, 856, 1013))
+        self.promptEditWidget.setGeometry(QRect(0, -390, 177, 1013))
         self.verticalLayout_7 = QVBoxLayout(self.promptEditWidget)
         self.verticalLayout_7.setSpacing(10)
         self.verticalLayout_7.setObjectName(u"verticalLayout_7")
@@ -820,11 +820,109 @@ class Ui_MainWindow(object):
         self.verticalLayout_4.addItem(self.verticalSpacer_4)
 
         self.stack.addWidget(self.page2)
+        self.memoryWidget = QWidget(self.mainContainer)
+        self.memoryWidget.setObjectName(u"memoryWidget")
+        self.memoryWidget.setGeometry(QRect(40, 110, 250, 511))
+        sizePolicy6 = QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+        sizePolicy6.setHorizontalStretch(0)
+        sizePolicy6.setVerticalStretch(0)
+        sizePolicy6.setHeightForWidth(self.memoryWidget.sizePolicy().hasHeightForWidth())
+        self.memoryWidget.setSizePolicy(sizePolicy6)
+        self.memoryWidget.setMinimumSize(QSize(250, 0))
+        self.memoryWidget.setMaximumSize(QSize(16777215, 16777215))
+        self.verticalLayout_8 = QVBoxLayout(self.memoryWidget)
+        self.verticalLayout_8.setSpacing(15)
+        self.verticalLayout_8.setObjectName(u"verticalLayout_8")
+        self.verticalLayout_8.setContentsMargins(0, 15, 0, 0)
+        self.memoryTitle = QWidget(self.memoryWidget)
+        self.memoryTitle.setObjectName(u"memoryTitle")
+        sizePolicy3.setHeightForWidth(self.memoryTitle.sizePolicy().hasHeightForWidth())
+        self.memoryTitle.setSizePolicy(sizePolicy3)
+        self.memoryTitle.setMinimumSize(QSize(0, 30))
+        self.memoryTitle.setMaximumSize(QSize(16777215, 30))
+        self.horizontalLayout_12 = QHBoxLayout(self.memoryTitle)
+        self.horizontalLayout_12.setObjectName(u"horizontalLayout_12")
+        self.horizontalLayout_12.setContentsMargins(15, 0, 9, 0)
+        self.memoryLabel = QLabel(self.memoryTitle)
+        self.memoryLabel.setObjectName(u"memoryLabel")
+        sizePolicy1.setHeightForWidth(self.memoryLabel.sizePolicy().hasHeightForWidth())
+        self.memoryLabel.setSizePolicy(sizePolicy1)
+
+        self.horizontalLayout_12.addWidget(self.memoryLabel)
+
+        self.horizontalSpacer_15 = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+
+        self.horizontalLayout_12.addItem(self.horizontalSpacer_15)
+
+        self.delMemoryBtn = QToolButton(self.memoryTitle)
+        self.delMemoryBtn.setObjectName(u"delMemoryBtn")
+
+        self.horizontalLayout_12.addWidget(self.delMemoryBtn)
+
+        self.memoryMoreBtn = QToolButton(self.memoryTitle)
+        self.memoryMoreBtn.setObjectName(u"memoryMoreBtn")
+
+        self.horizontalLayout_12.addWidget(self.memoryMoreBtn)
+
+
+        self.verticalLayout_8.addWidget(self.memoryTitle)
+
+        self.memoryArea = QScrollArea(self.memoryWidget)
+        self.memoryArea.setObjectName(u"memoryArea")
+        self.memoryArea.setWidgetResizable(True)
+        self.memoryAreaWidget = QWidget()
+        self.memoryAreaWidget.setObjectName(u"memoryAreaWidget")
+        self.memoryAreaWidget.setGeometry(QRect(0, 0, 248, 449))
+        self.verticalLayout_10 = QVBoxLayout(self.memoryAreaWidget)
+        self.verticalLayout_10.setObjectName(u"verticalLayout_10")
+        self.memoryLayout = QVBoxLayout()
+        self.memoryLayout.setObjectName(u"memoryLayout")
+        self.memoryLayout.setContentsMargins(-1, -1, -1, 15)
+        self.noMemoryLabel = QLabel(self.memoryAreaWidget)
+        self.noMemoryLabel.setObjectName(u"noMemoryLabel")
+        self.noMemoryLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self.memoryLayout.addWidget(self.noMemoryLabel)
+
+
+        self.verticalLayout_10.addLayout(self.memoryLayout)
+
+        self.memoryArea.setWidget(self.memoryAreaWidget)
+
+        self.verticalLayout_8.addWidget(self.memoryArea)
+
+        self.memoryMoreMenu = QWidget(self.mainContainer)
+        self.memoryMoreMenu.setObjectName(u"memoryMoreMenu")
+        self.memoryMoreMenu.setGeometry(QRect(420, 150, 91, 111))
+        sizePolicy2.setHeightForWidth(self.memoryMoreMenu.sizePolicy().hasHeightForWidth())
+        self.memoryMoreMenu.setSizePolicy(sizePolicy2)
+        self.verticalLayout_9 = QVBoxLayout(self.memoryMoreMenu)
+        self.verticalLayout_9.setObjectName(u"verticalLayout_9")
+        self.verticalLayout_9.setContentsMargins(0, -1, 0, -1)
+        self.manageBtn = QPushButton(self.memoryMoreMenu)
+        self.manageBtn.setObjectName(u"manageBtn")
+        sizePolicy7 = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
+        sizePolicy7.setHorizontalStretch(0)
+        sizePolicy7.setVerticalStretch(0)
+        sizePolicy7.setHeightForWidth(self.manageBtn.sizePolicy().hasHeightForWidth())
+        self.manageBtn.setSizePolicy(sizePolicy7)
+
+        self.verticalLayout_9.addWidget(self.manageBtn)
+
+        self.clearBtn = QPushButton(self.memoryMoreMenu)
+        self.clearBtn.setObjectName(u"clearBtn")
+        sizePolicy7.setHeightForWidth(self.clearBtn.sizePolicy().hasHeightForWidth())
+        self.clearBtn.setSizePolicy(sizePolicy7)
+
+        self.verticalLayout_9.addWidget(self.clearBtn)
+
         self.titleBar.raise_()
         self.statusBar.raise_()
         self.moreMenu.raise_()
         self.avatarMenu.raise_()
         self.stack.raise_()
+        self.memoryWidget.raise_()
+        self.memoryMoreMenu.raise_()
 
         self.verticalLayout_3.addWidget(self.mainContainer)
 
@@ -893,5 +991,11 @@ class Ui_MainWindow(object):
         self.otherTitle.setText(QCoreApplication.translate("MainWindow", u" \u2022 \u5176\u4ed6\u8bbe\u5b9a", None))
         self.promptSave.setText(QCoreApplication.translate("MainWindow", u"\u4fdd\u5b58", None))
         self.promptCancel.setText(QCoreApplication.translate("MainWindow", u"\u53d6\u6d88", None))
+        self.memoryLabel.setText(QCoreApplication.translate("MainWindow", u"\u8bb0\u5fc6", None))
+        self.delMemoryBtn.setText(QCoreApplication.translate("MainWindow", u"...", None))
+        self.memoryMoreBtn.setText(QCoreApplication.translate("MainWindow", u"...", None))
+        self.noMemoryLabel.setText(QCoreApplication.translate("MainWindow", u"\u5c1a\u672a\u6307\u5b9a\u4efb\u4f55\u8bb0\u5fc6\u3002", None))
+        self.manageBtn.setText(QCoreApplication.translate("MainWindow", u"\u7ba1\u7406", None))
+        self.clearBtn.setText(QCoreApplication.translate("MainWindow", u"\u6e05\u7a7a", None))
     # retranslateUi
 

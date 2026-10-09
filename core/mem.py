@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 import json
 import uuid
 import chromadb
+import sqlite3
 from core.config import c
 import json
 
@@ -12,9 +13,61 @@ if getattr(sys, "frozen", False):
 else:
     source = Path(__file__).parent.parent
 
+def get_memory():
+    '''获取用户指定的记忆'''
+
+    memory_path = source / "memory" / "memory.db"
+    if not memory_path.exists():
+        if not memory_path.parent.exists():
+            memory_path.parent.mkdir(parents=True)
+        memory_path.touch()
+        return None
+
+    with sqlite3.connect(memory_path) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            '''CREATE TABLE IF NOT EXISTS specified_memory (
+                id INTEGER PRIMARY KEY,
+                content TEXT NOT NULL,
+                timestamp DATETIME DEFAULT CURRENT_DATE
+            )'''
+        )
+        cursor.execute("SELECT * FROM specified_memory")
+        memories = cursor.fetchall()
+        if not memories:
+            return None
+
+        # 构造json格式的记忆列表
+        memory_list = []
+        for memory in memories:
+            memory_list.append({
+                "id": memory[0],
+                "content": memory[1],
+                "timestamp": memory[2]
+            })
+        return memory_list
+
+def del_memory(memory_ids: list):
+    '''删除指定的记忆'''
+
+    memory_path = source / "memory" / "memory.db"
+    if not memory_path.exists():
+        return False
+
+    with sqlite3.connect(memory_path) as conn:
+        cursor = conn.cursor()
+        count = len(memory_ids)
+        palceholders = ', '.join(['?'] * count)
+        cursor.execute(f"DELETE FROM specified_memory WHERE id IN ({palceholders})", memory_ids)
+
+    return True
+
+    
+
 def update():
     from utils import file
-    from main import client_get
+    if c.files_api:
+        from main import client_get
     # 历史记录
     history_path = source / "memory" / "history.json"
     c.exist(history_path)

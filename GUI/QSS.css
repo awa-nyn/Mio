@@ -495,3 +495,177 @@
 #btnLeft[danger="true"]:pressed, #btnMiddle[danger="true"]:pressed, #btnRight[danger="true"]:pressed {
     background-color: #f0bdb9;
 }
+
+/* ==================== 记忆面板 ==================== */
+#memoryWidget {
+    background-color: #ffffff;
+    border: 1px solid #e8e8e8;
+    border-left: none;
+    /* 贴着窗口左边，所以左边不做圆角，只圆右边两个角 */
+    border-top-left-radius: 0px;
+    border-bottom-left-radius: 0px;
+    border-top-right-radius: 10px;
+    border-bottom-right-radius: 10px;
+}
+
+#memoryLabel {
+    font-size: 17px;
+    font-weight: bold;
+    color: #333;
+}
+
+#memoryMoreBtn, #delMemoryBtn {
+    border: none;
+    background-color: transparent;
+    padding: 6px;
+}
+
+#memoryMoreBtn:hover {
+    background-color: #f0f0f0;
+    border-radius: 6px;
+}
+
+#memoryMoreBtn:pressed {
+    background-color: #e0e0e0;
+    border-radius: 6px;
+}
+
+#delMemoryBtn:hover {
+    background-color: #fdecec;
+    border-radius: 6px;
+}
+
+#delMemoryBtn:pressed {
+    background-color: #f8d3d1;
+    border-radius: 6px;
+}
+
+#memoryArea, #memoryAreaWidget {
+    background: transparent;
+    border: none;
+}
+
+#memoryArea QScrollBar:vertical {
+    background: transparent;
+    width: 8px;
+    margin: 0;
+}
+
+#memoryArea QScrollBar::handle:vertical {
+    background: #d8d8d8;
+    border-radius: 4px;
+    min-height: 30px;
+}
+
+#memoryArea QScrollBar::add-line:vertical,
+#memoryArea QScrollBar::sub-line:vertical {
+    height: 0;
+    background: transparent;
+}
+
+#noMemoryLabel {
+    color: #adadad;
+    font-size: 13px;
+    padding: 40px 0;
+}
+
+#memoryCard {
+    background-color: #fafafa;
+    border: 1px solid #ededed;
+    border-radius: 8px;
+}
+
+#memoryText {
+    font-size: 13px;
+    color: #333;
+}
+
+#memoryDate {
+    font-size: 11px;
+    color: #a8a8a8;
+}
+
+#memoryDel {
+    border: none;
+    background-color: transparent;
+    padding: 2px;
+}
+
+#memoryDel:hover {
+    background-color: #fdecec;
+    border-radius: 4px;
+}
+
+#memoryDel:pressed {
+    background-color: #f8d3d1;
+    border-radius: 4px;
+}
+
+/* 勾选框：方框和勾都是代码画的图标，这里只给点击时的底色反馈 */
+#memoryCheck {
+    border: none;
+    background-color: transparent;
+    padding: 2px;
+    border-radius: 6px;
+}
+
+#memoryCheck:hover {
+    background-color: rgba(0, 0, 0, 0.08);
+}
+
+#memoryCheck:pressed {
+    background-color: rgba(0, 0, 0, 0.18);
+}
+
+#memoryMoreMenu {
+    background-color: white;
+    border: 1px solid #000000;
+    border-radius: 8px;
+}
+
+#memoryMoreMenu QPushButton {
+    background-color: transparent;
+    border: none;
+    text-align: center;
+    padding: 8px 10px;
+    font-size: 13px;
+    color: #333;
+}
+
+#memoryMoreMenu QPushButton:hover {
+    background-color: #f0f0f0;
+}
+
+#memoryMoreMenu QPushButton:pressed {
+    background-color: #dcdcdc;
+}
+
+#memoryMoreMenu QPushButton:disabled {
+    color: #c4c4c4;
+}
+
+#memoryMoreMenu #clearBtn {
+    color: #d9534f;
+}
+
+#memoryMoreMenu #clearBtn:disabled {
+    color: #ecc3c0;
+}
+
+/* 管理模式里顶替「更多」的那个「取消」按钮 */
+#memoryManageCancel {
+    border: none;
+    background-color: #f0f0f0;
+    border-radius: 6px;
+    color: #444;
+    font-size: 12px;
+    padding: 5px 12px;
+}
+
+#memoryManageCancel:hover {
+    background-color: #e2e2e2;
+}
+
+#memoryManageCancel:pressed {
+    background-color: #d2d2d2;
+}

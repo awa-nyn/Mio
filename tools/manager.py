@@ -394,7 +394,8 @@ def specify_memory(memory_text):
         cursor.execute(
             '''CREATE TABLE IF NOT EXISTS specified_memory (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                memory TEXT NOT NULL
+                memory TEXT NOT NULL,
+                timestamp DATETIME DEFAULT CURRENT_DATE
                 )
             '''
             )
@@ -537,11 +538,6 @@ def cmd(command: str, content):
     if inp.lower() != "y":
         print("已拒绝执行命令")
         return "用户拒绝执行命令"
-    inp = input(f"请再次确认你已理解命令含义，执行请输入不携带参数的命令名称，即第一个单词。输入其他内容将取消执行。")
-
-    if inp != name:
-        print("已取消执行命令")
-        return "用户取消执行命令"
 
     import subprocess
     try:

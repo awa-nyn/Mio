@@ -8,6 +8,7 @@ from PySide6.QtGui import QColor, QIcon, QPixmap
 from GUI import Ui_MainWindow
 
 from image_window import ImageViewer
+from memory_panel import MemoryPanel
 from settings_page import SettingsPage
 from ui_common import (AVATAR_DIR, ICON_COLOR, ICON_SIZE, avatar_pixmap, load_icon,
                        load_qss, round_pixmap)
@@ -112,6 +113,10 @@ class MainWindow(QMainWindow):
         self.ui.PromptClose.setIconSize(QSize(16, 16))
         self.ui.PromptClose.setText("")
 
+        # 记忆面板：从左边滑出来盖在对话区上
+        self.memory_panel = MemoryPanel(self)
+        self.ui.memoryBtn.clicked.connect(self.open_memory)
+
         # 输入框里有内容才显示发送按钮
         self.ui.sendBtn.setVisible(False)   # 一开始是空的，先藏起来
         self.ui.inputEdit.textChanged.connect(self._toggle_send_btn)
@@ -194,6 +199,8 @@ class MainWindow(QMainWindow):
         QTimer.singleShot(0, self._update_input_row)  # 延迟更新输入区位置
         QTimer.singleShot(0, self._update_avatar_menu)  # 延迟更新头像菜单位置
         QTimer.singleShot(0, self._update_more_menu)  # 延迟更新更多菜单位置
+        if getattr(self, 'memory_panel', None) is not None:
+            QTimer.singleShot(0, self.memory_panel.refresh)  # 记忆面板跟着窗口尺寸走
 
     def closeEvent(self, event):
         '''主窗口关掉的时候，把子窗口一起带走（不然进程会赖在后台）'''
@@ -346,6 +353,12 @@ class MainWindow(QMainWindow):
         self.hide_avatar_menu()
         self.settings.load()        # 每次进页面都重新读一遍数据库
         self.go_page(1)
+
+    def open_memory(self):
+        '''从头像菜单打开记忆面板'''
+
+        self.hide_avatar_menu()
+        self.memory_panel.open()
 
     def show_toast(self, text, ms=2000):
         '''屏幕中下方弹出的灰色小提示：不挡操作，过一会儿自己消失'''
@@ -652,6 +665,15 @@ class MainWindow(QMainWindow):
                     self._hit(self.ui.moreMenu, global_pos) or
                     self._hit(self.ui.moreBtn, global_pos)):
                 self.hide_more_menu()
+
+            # 记忆面板：点面板以外的地方收起；点面板里面则收起它自己的菜单
+            if self.memory_panel.is_open:
+                if not self._hit(self.ui.memoryWidget, global_pos):
+                    self.memory_panel.close()
+                elif (self.memory_panel.menu_open
+                      and not self._hit(self.ui.memoryMoreMenu, global_pos)
+                      and not self._hit(self.ui.memoryMoreBtn, global_pos)):
+                    self.memory_panel.hide_menu()
 
         # ----按住的样式 / 拉边框 / 鼠标形状----
         if event.type() in (QEvent.MouseMove, QEvent.MouseButtonPress,
