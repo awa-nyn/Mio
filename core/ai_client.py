@@ -39,6 +39,8 @@ async def _chat(client: OpenAI):
 
     c.exist(source / "memory" / "history.json")
     c.exist(source / "memory" / "token.json")
+    if (source / "memory" / "history.json").stat().st_size == 0:
+        file.write(source / "memory" / "history.json", [], mode='w')
     with open(source / "memory" / "history.json", "r", encoding="utf-8") as f:
         history = json.load(f)
     total_tokens = 0

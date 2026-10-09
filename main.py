@@ -1,9 +1,12 @@
-from dotenv import load_dotenv
 from openai import OpenAI
 from openai import APIError
 from core import config
 from core import ai_client
-
+import asyncio
+from PySide6.QtWidgets import QApplication
+import sys
+import qasync
+from GUI.main_window import MainWindow
 
 # 初始化OpenAI API
 def client_get():
@@ -18,6 +21,17 @@ def client_get():
     return client
 
 if __name__ == "__main__":
+    # 共用事件循环
+    app = QApplication(sys.argv)
+    loop = qasync.QEventLoop(app)
+    asyncio.set_event_loop(loop)
+
+    window = MainWindow()
+    window.show()
+
+    with loop:
+        loop.run_forever()
+
     # 调用chat函数
     try:
         ai_client.chat(client_get())

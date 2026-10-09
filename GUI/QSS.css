@@ -24,18 +24,20 @@
     color: #888;
 }
 
-/* 标题栏按钮 */
+/* 标题栏按钮 + 输入区按钮（透明的那些） */
 #avatarBtn, #settingsBtn, #moreBtn,
-#minBtn, #maxBtn, #closeBtn, #callBtn, #voiceBtn {
+#minBtn, #maxBtn, #closeBtn, #callBtn, #voiceBtn,
+#attachBtn, #imageBtn, #speechBtn {
     border: none;
     color: black;
     background-color: transparent;
     padding: 6px;
 }
 
-/* 标题栏按钮鼠标悬停效果 */
+/* 上面的按钮鼠标悬停效果 */
 #avatarBtn:hover, #settingsBtn:hover, #moreBtn:hover,
-#minBtn:hover, #maxBtn:hover, #callBtn:hover, #voiceBtn:hover {
+#minBtn:hover, #maxBtn:hover, #callBtn:hover, #voiceBtn:hover,
+#attachBtn:hover, #imageBtn:hover, #speechBtn:hover {
     background-color: #e5e5e5;
     border-radius: 6px;
 }
@@ -46,6 +48,124 @@
     border-radius: 6px;
 }
 
+/* 点下去的时候更深一档（头像按钮除外，它在转圈） */
+#settingsBtn:pressed, #moreBtn:pressed,
+#minBtn:pressed, #maxBtn:pressed,
+#callBtn:pressed, #voiceBtn:pressed,
+#attachBtn:pressed, #imageBtn:pressed, #speechBtn:pressed,
+#avatarMenu QPushButton:pressed, #moreMenu QPushButton:pressed {
+    background-color: #cfcfcf;
+    border-radius: 6px;
+}
+
+/* 关闭按钮点下去用更深一档的红 */
+#closeBtn:pressed {
+    background-color: #e03e40;
+    border-radius: 6px;
+}
+
+/* 按住不放时保持深灰：鼠标拖到按钮外面也不掉色
+   （按钮自己的按下状态在鼠标移出后会取消，所以另外挂了个 holding 属性）
+   这里必须用 ID 选择器，否则会被上面 #xxx 的透明背景规则压住 */
+#settingsBtn[holding="true"], #moreBtn[holding="true"],
+#minBtn[holding="true"], #maxBtn[holding="true"],
+#callBtn[holding="true"], #voiceBtn[holding="true"],
+#attachBtn[holding="true"], #imageBtn[holding="true"], #speechBtn[holding="true"],
+#avatarMenu QPushButton[holding="true"], #moreMenu QPushButton[holding="true"] {
+    background-color: #cfcfcf;
+    border-radius: 6px;
+}
+
+/* 关闭按钮按住不放时保持深红 */
+#closeBtn[holding="true"] {
+    background-color: #e03e40;
+    border-radius: 6px;
+}
+
+/* 发送按钮按住不放时保持深蓝 */
+#sendBtn[holding="true"] {
+    background-color: #1565c0;
+}
+
+/* 更多按钮：菜单展开期间保持深灰（放在最后，压过悬停态） */
+#moreBtn[menuOpen="true"] {
+    background-color: #cfcfcf;
+    border-radius: 6px;
+}
+
+/* 发送按钮：蓝底白字白图标 */
+#sendBtn {
+    background-color: #1e88e5;
+    border: none;
+    border-radius: 17px;
+    color: white;
+    font-size: 13px;
+    padding: 0 14px;
+}
+
+#sendBtn:hover {
+    background-color: #1976d2;
+}
+
+#sendBtn:pressed {
+    background-color: #1565c0;
+}
+
+/* 头像挑选区：四张缩略图 + 右上角的放大按钮 */
+#avatarPicker {
+    background: transparent;
+}
+
+#Mio, #MioCat, #QMio, #QMioCat {
+    background-color: #f2f2f2;
+    border-radius: 12px;
+}
+
+/* 盖在缩略图上的透明按钮：点它就是选这张 */
+#avatarPick {
+    background-color: transparent;
+    border: none;
+    border-radius: 12px;
+}
+
+/* 悬停时压一层半透明黑：图片看起来是「变暗」，不是被灰盖住
+   （菜单里那条 QPushButton:hover 会波及过来，所以要写得更具体） */
+#avatarMenu #avatarPick:hover {
+    background-color: rgba(0, 0, 0, 0.28);
+    border-radius: 12px;
+}
+
+#avatarMenu #avatarPick:pressed {
+    background-color: rgba(0, 0, 0, 0.45);
+    border-radius: 12px;
+}
+
+#zoomBtn1, #zoomBtn2, #zoomBtn3, #zoomBtn4 {
+    border: none;
+    background-color: rgba(130, 130, 130, 0.55);
+    border-radius: 8px;
+}
+
+#zoomBtn1:hover, #zoomBtn2:hover, #zoomBtn3:hover, #zoomBtn4:hover {
+    background-color: rgba(95, 95, 95, 0.80);
+}
+
+#zoomBtn1:pressed, #zoomBtn2:pressed, #zoomBtn3:pressed, #zoomBtn4:pressed {
+    background-color: rgba(70, 70, 70, 0.90);
+}
+
+/* 图片查看器 */
+#image {
+    background-color: #fafafa;
+    border-radius: 10px;
+}
+
+/* 堆叠容器和它里面的页面：背景透明，露出主容器的白色圆角 */
+#stack, #page1, #page2 {
+    background: transparent;
+    border: none;
+}
+
 /* 聊天滚动区 */
 #chatScroll {
     background-color: white;
@@ -53,7 +173,7 @@
 }
 
 /* 聊天内容区 */
-#chatScroll > QWidget > QWidget {
+#chatWidget {
     background-color: white;
 }
 
@@ -97,7 +217,7 @@
 }
 
 /* 分割线 */
-#divider, #dividerA, #dividerB, #dividerC, #dividerD {
+#divider, #dividerA, #dividerB, #dividerC, #dividerD, #dividerE {
     background-color: #d0d0d0;
 }
 
@@ -112,7 +232,6 @@
 #inputEdit {
     background-color: transparent;
     border: none;
-    outline: none;
     font-size: 20px;
     color: #333;
 }
@@ -145,4 +264,234 @@
 
 #avatarMenu QPushButton:hover {
     background-color: #f0f0f0;
+}
+
+/* 更多按钮弹窗 */
+#moreMenu {
+    background-color: white;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    border: 1px solid #e0e0e0;
+}
+
+#moreMenu QPushButton {
+    background-color: transparent;
+    border: none;
+    text-align: left;
+    padding: 8px 8px;
+    font-size: 13px;
+    color: #333;
+}
+
+#moreMenu QPushButton:hover {
+    background-color: #f0f0f0;
+}
+
+/* ==================== 第二页：修改设定 ==================== */
+#page2, #topBar {
+    background: transparent;
+}
+
+#PromptClose {
+    border: none;
+    background-color: transparent;
+    padding: 4px;
+}
+
+#PromptClose:hover {
+    background-color: #e5e5e5;
+    border-radius: 6px;
+}
+
+#PromptClose:pressed {
+    background-color: #cfcfcf;
+    border-radius: 6px;
+}
+
+/* 设定页的滚动区：背景透明，滚动条细一点 */
+#promptEditArea, #promptEditWidget {
+    background: transparent;
+    border: none;
+}
+
+#promptEditArea QScrollBar:vertical {
+    background: transparent;
+    width: 8px;
+    margin: 0;
+}
+
+#promptEditArea QScrollBar::handle:vertical {
+    background: #d0d0d0;
+    border-radius: 4px;
+    min-height: 30px;
+}
+
+#promptEditArea QScrollBar::add-line:vertical,
+#promptEditArea QScrollBar::sub-line:vertical {
+    height: 0;
+    background: transparent;
+}
+
+/* 大标题 */
+#assiTitle, #userTitle {
+    font-size: 20px;
+    font-weight: bold;
+    color: #222;
+    padding: 6px 0 2px 0;
+}
+
+/* 小节标题 */
+#assiProfileTitle, #styleTitle, #personalityTitle, #baseInfoTitle, #otherTitle {
+    font-size: 14px;
+    color: #555;
+    padding: 8px 0 2px 0;
+}
+
+/* 设定页里所有的多行输入框 */
+#assiProfileEdit, #styleEdit, #personality, #otherEdit,
+#userNameEdit, #userNicknameEdit, #userGenderEdit,
+#userAgeEdit, #userBirthdayEdit, #userIdentityEdit {
+    background-color: #fafafa;
+    border: 1px solid #e6e6e6;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 14px;
+    color: #333;
+}
+
+#assiProfileEdit:focus, #styleEdit:focus, #personality:focus, #otherEdit:focus,
+#userNameEdit:focus, #userNicknameEdit:focus, #userGenderEdit:focus,
+#userAgeEdit:focus, #userBirthdayEdit:focus, #userIdentityEdit:focus {
+    background-color: #ffffff;
+    border: 1px solid #1e88e5;
+}
+
+/* 基础信息那几行的小标签 */
+#userName, #userNickname, #userGender, #userAge, #userBirthday, #userIdentity {
+    font-size: 14px;
+    color: #666;
+}
+
+/* 保存：有改动才是蓝的 */
+#promptSave {
+    background-color: #1e88e5;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-size: 13px;
+    padding: 6px 20px;
+}
+
+#promptSave:hover {
+    background-color: #1976d2;
+}
+
+#promptSave:pressed {
+    background-color: #1565c0;
+}
+
+/* 没有改动时是灰的：禁用控件本来就不响应鼠标悬停 */
+#promptSave:disabled {
+    background-color: #e8e8e8;
+    color: #b5b5b5;
+}
+
+/* 取消 */
+#promptCancel {
+    background-color: #f0f0f0;
+    border: none;
+    border-radius: 6px;
+    color: #444;
+    font-size: 13px;
+    padding: 6px 20px;
+}
+
+#promptCancel:hover {
+    background-color: #e2e2e2;
+}
+
+#promptCancel:pressed {
+    background-color: #d2d2d2;
+}
+
+/* 底部那个两秒就消失的小提示 */
+#toast {
+    background-color: rgba(70, 70, 70, 0.88);
+    color: white;
+    font-size: 13px;
+    border-radius: 8px;
+    padding: 8px 18px;
+}
+
+/* ==================== 信息弹窗 ==================== */
+#messageWidget {
+    background-color: white;
+    border: 1px solid #e6e6e6;
+    border-radius: 12px;
+}
+
+#title {
+    font-size: 16px;
+    font-weight: bold;
+    color: #222;
+}
+
+#message {
+    font-size: 13px;
+    color: #666;
+}
+
+#btnLeft, #btnMiddle {
+    background-color: #f0f0f0;
+    border: none;
+    border-radius: 6px;
+    color: #444;
+    font-size: 13px;
+    padding: 6px 16px;
+}
+
+#btnLeft:hover, #btnMiddle:hover {
+    background-color: #e2e2e2;
+}
+
+#btnRight {
+    background-color: #1e88e5;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-size: 13px;
+    padding: 6px 16px;
+}
+
+#btnRight:hover {
+    background-color: #1976d2;
+}
+
+/* 第二页那条分割线 */
+#dividerF {
+    background-color: #d0d0d0;
+}
+
+/* 弹窗里的危险按钮（丢弃、确认放弃）：淡红底 + 深红字 */
+#btnLeft[danger="true"], #btnMiddle[danger="true"], #btnRight[danger="true"] {
+    background-color: #fdecec;
+    color: #c0392b;
+}
+
+#btnLeft[danger="true"]:hover, #btnMiddle[danger="true"]:hover, #btnRight[danger="true"]:hover {
+    background-color: #f8d3d1;
+}
+
+/* 弹窗按钮按下去再深一档 */
+#btnLeft:pressed, #btnMiddle:pressed {
+    background-color: #d4d4d4;
+}
+
+#btnRight:pressed {
+    background-color: #1565c0;
+}
+
+/* 危险按钮按下：比悬停再深一点（放在最后，压过悬停态） */
+#btnLeft[danger="true"]:pressed, #btnMiddle[danger="true"]:pressed, #btnRight[danger="true"]:pressed {
+    background-color: #f0bdb9;
 }
