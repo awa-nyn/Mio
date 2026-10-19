@@ -2,8 +2,9 @@ import os
 from pathlib import Path
 import sys
 import random
+import sqlite3
 from dotenv import load_dotenv
-from utils import file
+from utils import exist, read
 
 def _ensure_value(config, table_path, key, default=None, type_ = bool):
     parts = table_path.split(".")   # 将表路径分割成各个部分
@@ -29,14 +30,6 @@ class Config():
     def __init__(self):
         self.tts = None
 
-
-    @staticmethod
-    def exist(path: Path):
-        if not path.exists():
-            if not path.parent.exists():
-                path.parent.mkdir(parents=True)
-            path.touch()
-
     def load(self):
 
         # 获取配置文件路径
@@ -49,15 +42,15 @@ class Config():
         commands_config = source / "config" / "指令配置.toml"
         api_config = source / "config" / "API配置.toml"
 
-        self.exist(normal_config)
-        self.exist(memory_config)
-        self.exist(commands_config)
-        self.exist(api_config)
+        exist(normal_config)
+        exist(memory_config)
+        exist(commands_config)
+        exist(api_config)
 
-        normal_config = file.read(normal_config)
-        memory_config = file.read(memory_config)
-        commands_config = file.read(commands_config)
-        api_config = file.read(api_config)
+        normal_config = read(normal_config)
+        memory_config = read(memory_config)
+        commands_config = read(commands_config)
+        api_config = read(api_config)
 
 
 

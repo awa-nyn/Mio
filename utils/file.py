@@ -6,6 +6,7 @@ import json
 import os
 from configparser import ConfigParser
 from dotenv import load_dotenv
+from pathlib import Path
     
 # 打开文件操作
 
@@ -54,3 +55,9 @@ def write(file_path, content, mode='a', encoding='utf-8'):
             config.write(f)  # 使用ConfigParser写入INI文件
         else:
             f.write(content)  # 如果文件类型不匹配，直接写入内容
+
+def exist(path: Path):
+    if not path.exists():
+        if not path.parent.exists():
+            path.parent.mkdir(parents=True, exist_ok=True)
+        path.touch()

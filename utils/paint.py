@@ -6,7 +6,6 @@ import aiohttp
 import datetime
 import uuid
 import random
-from core.config import c
 from aiohttp import ClientConnectorError
 
 if getattr(sys, "frozen", False):
@@ -28,6 +27,7 @@ class workflow:
         self.success = None
 
     def default(self, args: dict):
+        from core.config import c
         path = None
         # 将args中的参数替换到default_workflow中
         for key, value in args.items():
@@ -90,6 +90,7 @@ class workflow:
 
     @staticmethod
     async def confirm():
+        from core.config import c
         if c.paint_confirm:
             inp = input(f"{c.assistant}请求调用ComfyUI进行绘画，是否同意？(y/n)")
             while True:
@@ -102,6 +103,7 @@ class workflow:
             return True
 
     async def paint(self, path: Path):
+        from core.config import c
         if not path.exists():
             print(f"工作流文件 {path} 不存在，请检查路径是否正确")
             self.success = "path"

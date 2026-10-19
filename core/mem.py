@@ -67,7 +67,7 @@ def del_memory(memory_ids: list):
 def update():
     from utils import file
     if c.files_api:
-        from main import client_get
+        from client import client
     # 历史记录
     history_path = source / "memory" / "history.json"
     c.exist(history_path)
@@ -81,7 +81,6 @@ def update():
     if not images_data_path.exists():
         images_data_path.touch()
     if images_data_path.stat().st_size == 0 and c.files_api:
-        client = client_get()
         files = client.files.list(order="desc")
         for f in files.data:
             client.files.delete(f.id)
@@ -159,7 +158,6 @@ def update():
                                     if keep:
                                         data_list.append(data)
                             if data_list:
-                                client = client_get()
                                 with open(images_data_path, "w", encoding="utf-8") as f:
                                     for data in data_list:
                                         json.dump(data, f, ensure_ascii=False)

@@ -11,7 +11,7 @@ import json
 import platform
 import sqlite3
 from core.config import c
-from utils.paint import workflow
+from utils import workflow, exist
 
 
 session = PromptSession(multiline=True)
@@ -33,12 +33,19 @@ async def _chat(client: OpenAI):
     from core.commands import act
     from tools import manager
 
+    # 导入状态
+    from GUI.status import stat
     # 检查历史记录是否需要更新
 
     wf = None
 
-    c.exist(source / "memory" / "history.json")
-    c.exist(source / "memory" / "token.json")
+    # 确保各文件存在
+    exist(source / "memory" / "history.json")
+    exist(source / "memory" / "token.json")
+    exist(source / "memory" / "images_data.jsonl")
+
+
+
     if (source / "memory" / "history.json").stat().st_size == 0:
         file.write(source / "memory" / "history.json", [], mode='w')
     with open(source / "memory" / "history.json", "r", encoding="utf-8") as f:
@@ -61,7 +68,6 @@ async def _chat(client: OpenAI):
                 json.dump({"total_tokens": 0}, f, ensure_ascii=False, indent=4)
 
     # 检查图片数据文件大小，超过限制则更新历史记录
-    c.exist(source / "memory" / "images_data.jsonl")
     with open(source / "memory" / "images_data.jsonl", "r", encoding="utf-8") as f:
         size = 0
         for line in f:
@@ -87,8 +93,6 @@ async def _chat(client: OpenAI):
     while True:
         history_path = source / "memory" / "history.json"
         # 读取各文件内容
-        if not history_path.exists():
-            c.exist(history_path)
         if history_path.stat().st_size == 0:
             file.write(history_path, [], mode='w')
         history: list = file.read(history_path)
@@ -311,9 +315,10 @@ async def _chat(client: OpenAI):
             await tts.start()
 
 
-        # 流式请求
+# =============================流式请求==============================
         print(f"\n{c.assistant} >>> ", end="")
         first_user_msg = True
+        is_tool_call = False
         while True:
             content = []
             reasoning_content = []
@@ -340,6 +345,10 @@ async def _chat(client: OpenAI):
                         await tts.put_text(delta["content"])   # 将内容放入队列中
                     await asyncio.sleep(0.05)
                 if delta.get("tool_calls"):     # 如果存在工具调用
+                    if not is_tool_call:
+                        stat.status_code = 201   # 工作中，蓝色
+                        is_tool_call = True
+
                     tool_calls = delta["tool_calls"]
                     for item in tool_calls:     # 遍历工具调用列表
                         idx = item["index"]     # 键为index参数
@@ -366,7 +375,6 @@ async def _chat(client: OpenAI):
                     # 更新总token数
                     total_tokens = (chunk.get("usage") or {}).get("total_tokens", 0)
                     if total_tokens:
-                        c.exist(source / "memory" / "token.json")
                         with open(source / "memory" / "token.json", "w", encoding="utf-8") as f:
                             json.dump({"total_tokens": total_tokens}, f, ensure_ascii=False, indent=4)
                     print("\n")
@@ -519,3 +527,6 @@ async def _chat(client: OpenAI):
 
         if c.tts:
             await tts.finish()
+        if is_tool_call:
+            stat.status_code = 200
+        

@@ -9,6 +9,8 @@ from GUI import Ui_MainWindow
 
 from image_window import ImageViewer
 from memory_panel import MemoryPanel
+from status_monitor import StatusMonitor
+from wheel_guard import WheelGuard
 from settings_page import SettingsPage
 from ui_common import (AVATAR_DIR, ICON_COLOR, ICON_SIZE, avatar_pixmap, load_icon,
                        load_qss, round_pixmap)
@@ -109,13 +111,21 @@ class MainWindow(QMainWindow):
         # 第二页（修改设定）
         self.settings = SettingsPage(self)
         self.ui.editPersonaBtn.clicked.connect(self.open_settings)
-        self.ui.PromptClose.setIcon(load_icon("close"))
-        self.ui.PromptClose.setIconSize(QSize(16, 16))
-        self.ui.PromptClose.setText("")
+        self.ui.promptClose.setIcon(load_icon("close"))
+        self.ui.promptClose.setIconSize(QSize(16, 16))
+        self.ui.promptClose.setText("")
 
         # 记忆面板：从左边滑出来盖在对话区上
         self.memory_panel = MemoryPanel(self)
         self.ui.memoryBtn.clicked.connect(self.open_memory)
+
+        # 状态监视：后台轮询服务状态 + 一直探网络
+        self.status_monitor = StatusMonitor(self)
+
+        # 滚轮守卫：鼠标划过下拉框、数字框时别偷偷改值（点过之后才让滚轮生效）
+        self.wheel_guard = WheelGuard(self)
+        self.wheel_guard.apply(self)        # 把现有控件都设一遍焦点策略
+        QApplication.instance().installEventFilter(self.wheel_guard)
 
         # 输入框里有内容才显示发送按钮
         self.ui.sendBtn.setVisible(False)   # 一开始是空的，先藏起来
@@ -160,6 +170,8 @@ class MainWindow(QMainWindow):
             self.ui.editPersonaBtn:  "edit",
             self.ui.memoryBtn:       "memory",
             # 更多菜单
+            self.ui.fileBtn:  "file",
+            self.ui.logBtn:   "log",
             self.ui.help:     "help",
             self.ui.update:   "update",
             self.ui.ComfyUI:  "run_ComfyUI",
@@ -205,6 +217,8 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event):
         '''主窗口关掉的时候，把子窗口一起带走（不然进程会赖在后台）'''
 
+        if getattr(self, 'status_monitor', None) is not None:
+            self.status_monitor.stop()      # 先收掉两个后台线程，不然进程退不干净
         if getattr(self, 'viewer', None) is not None:
             self.viewer.close()     # 查看器是独立窗口，findChildren 找不到它，得单独关
         for child in self.findChildren(QDialog):
@@ -215,6 +229,15 @@ class MainWindow(QMainWindow):
         '''两个下拉菜单共用的纵向起点：和标题栏底边齐平（现在都是 80）'''
 
         return self.ui.titleBar.height()
+
+    def _menu_slide_start(self, target):
+        '''菜单滑动动画的起点：整块往上一挪就藏进标题栏后面
+
+        起点让菜单的底边正好贴着标题栏底边，所以高度无论多少都藏得住。
+        '''
+
+        return QRect(target.x(), self.ui.titleBar.height() - target.height(),
+                     target.width(), target.height())
 
     def _hit(self, widget, global_pos):
         '''判断一个全局坐标是否落在某个控件身上'''
@@ -487,6 +510,24 @@ class MainWindow(QMainWindow):
         else:
             self.showMaximized()
 
+    def changeEvent(self, event):
+        '''窗口状态变了（最大化、还原……）就顺手换一下最大化按钮的图标'''
+
+        super().changeEvent(event)
+        if event.type() == QEvent.WindowStateChange:
+            self._update_max_icon()
+
+    def _update_max_icon(self):
+        '''最大化的时候显示「还原」那个图标，平时显示「最大化」
+
+        挂在 changeEvent 上，所以不管是点按钮、双击标题栏还是贴边吸附导致的，
+        图标都能跟着变。
+        '''
+
+        if getattr(self, 'ui', None) is None:
+            return
+        self.ui.maxBtn.setIcon(load_icon("recover" if self.isMaximized() else "max"))
+
     # ==========头像相关事件==========
     def _animate_avatar(self, target_angle):
         '''把头像转到指定角度'''
@@ -527,11 +568,12 @@ class MainWindow(QMainWindow):
 
         self._update_avatar_menu()  # 定位
 
-        target = self.ui.avatarMenu.geometry()  # 目标大小
-        start = QRect(target.x(), target.y(), target.width(), 0)  # 起始大小
-        self.ui.avatarMenu.setGeometry(start)  # 设置初始大小
-        self.ui.avatarMenu.show()  # 显示菜单
-        self.ui.avatarMenu.raise_()  # 确保菜单在最上层
+        target = self.ui.avatarMenu.geometry()      # 目标位置
+        start = self._menu_slide_start(target)      # 起点：整块藏在标题栏后面
+        self.ui.avatarMenu.setGeometry(start)
+        self.ui.avatarMenu.show()
+        self.ui.avatarMenu.raise_()
+        self.ui.titleBar.raise_()   # 标题栏压在菜单上面，滑动时菜单才像从底下钻出来
 
         anim = QPropertyAnimation(self.ui.avatarMenu, b"geometry")
         anim.setDuration(self.avatar_event_time)  # 动画持续时间
@@ -552,8 +594,8 @@ class MainWindow(QMainWindow):
         self._reset_avatar_picker()    # 收起菜单时把挑选区复位，下次展开还是最初的样子
         self.avatar_menu_open = False  # 先改状态，避免重复触发
 
-        start = self.ui.avatarMenu.geometry()  # 起始大小
-        end = QRect(start.x(), start.y(), start.width(), 0)  # 目标大小
+        start = self.ui.avatarMenu.geometry()        # 起始位置
+        end = self._menu_slide_start(start)          # 往上滑回标题栏后面
 
         anim = QPropertyAnimation(self.ui.avatarMenu, b"geometry")  # 创建动画
         anim.setDuration(self.avatar_event_time)  # 动画持续时间
@@ -591,11 +633,12 @@ class MainWindow(QMainWindow):
 
         self._update_more_menu()  # 定位
 
-        target = self.ui.moreMenu.geometry()  # 目标大小
-        start = QRect(target.x(), target.y(), target.width(), 0)  # 起始大小
-        self.ui.moreMenu.setGeometry(start)  # 设置初始大小
-        self.ui.moreMenu.show()  # 显示菜单
-        self.ui.moreMenu.raise_()  # 确保菜单在最上层
+        target = self.ui.moreMenu.geometry()        # 目标位置
+        start = self._menu_slide_start(target)      # 起点：整块藏在标题栏后面
+        self.ui.moreMenu.setGeometry(start)
+        self.ui.moreMenu.show()
+        self.ui.moreMenu.raise_()
+        self.ui.titleBar.raise_()   # 同上
 
         anim = QPropertyAnimation(self.ui.moreMenu, b"geometry")
         anim.setDuration(self.avatar_event_time)  # 动画持续时间
@@ -615,8 +658,8 @@ class MainWindow(QMainWindow):
 
         self.more_menu_open = False  # 先改状态，避免重复触发
 
-        start = self.ui.moreMenu.geometry()  # 起始大小
-        end = QRect(start.x(), start.y(), start.width(), 0)  # 目标大小
+        start = self.ui.moreMenu.geometry()          # 起始位置
+        end = self._menu_slide_start(start)          # 往上滑回标题栏后面
 
         anim = QPropertyAnimation(self.ui.moreMenu, b"geometry")  # 创建动画
         anim.setDuration(self.avatar_event_time)  # 动画持续时间

@@ -669,3 +669,30 @@
 #memoryManageCancel:pressed {
     background-color: #d2d2d2;
 }
+
+/* ==================== 状态颜色 ==================== */
+/* 代码只负责切 state，颜色都在这里配 */
+#statusDot[state="loading"], #statusDotA[state="loading"],
+#statusLabel[state="loading"], #statusLabel_2[state="loading"] {
+    color: #b0b0b0;
+}
+
+#statusDot[state="ok"], #statusDotA[state="ok"],
+#statusLabel[state="ok"], #statusLabel_2[state="ok"] {
+    color: #4caf50;
+}
+
+#statusDot[state="work"], #statusDotA[state="work"],
+#statusLabel[state="work"], #statusLabel_2[state="work"] {
+    color: #1e88e5;
+}
+
+#statusDot[state="error"], #statusDotA[state="error"],
+#statusLabel[state="error"], #statusLabel_2[state="error"] {
+    color: #e53935;
+}
+
+#statusDot[state="offline"], #statusDotA[state="offline"],
+#statusLabel[state="offline"], #statusLabel_2[state="offline"] {
+    color: #666666;
+}

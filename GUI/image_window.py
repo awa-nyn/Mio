@@ -117,6 +117,13 @@ class ImageViewer(QDialog):
         else:
             self.showMaximized()
 
+    def changeEvent(self, event):
+        '''窗口状态变了就把最大化按钮的图标换掉'''
+
+        super().changeEvent(event)
+        if event.type() == QEvent.WindowStateChange:
+            self.ui.maxBtn.setIcon(load_icon("recover" if self.isMaximized() else "max"))
+
     def _render(self):
         '''按当前缩放倍数把图重新画到 Label 上'''
 

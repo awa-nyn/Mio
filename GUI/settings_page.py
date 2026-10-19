@@ -40,7 +40,7 @@ def _set_text(box, text):
 ASSI_FIELDS = (
     ("assiProfileEdit", 0),     # 基础设定
     ("styleEdit", 1),           # 说话风格
-    ("personality", 2),         # 性格特点
+    ("personalityEdit", 2),     # 性格特点
 )
 
 # 用户基础信息：界面控件名 -> JSON 里的键
@@ -76,7 +76,7 @@ class SettingsPage:
         # 三个按钮
         self.ui.promptSave.clicked.connect(self.save)
         self.ui.promptCancel.clicked.connect(self.cancel)
-        self.ui.PromptClose.clicked.connect(self.close_page)
+        self.ui.promptClose.clicked.connect(self.close_page)
 
         self.ui.promptSave.setToolTip("保存当前的设定")
 
